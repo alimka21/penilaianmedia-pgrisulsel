@@ -1,0 +1,6 @@
+{
+  "name": "Web Penilaian Lomba Media Pembelajaran",
+  "description": "Platform penilaian digital yang adil, terstruktur, dan transparan untuk lomba media pembelajaran tingkat TK hingga SMA/SLB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
