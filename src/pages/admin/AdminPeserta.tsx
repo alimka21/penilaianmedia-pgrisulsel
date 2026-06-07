@@ -17,6 +17,7 @@ export function AdminPeserta() {
   const { pesertaList, addPeserta, deletePeserta, importPeserta, updatePeserta } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<Kategori | 'Semua'>('Semua');
   const [form, setForm] = useState<Partial<Peserta>>({
     namaPeserta: '',
     kabupatenKota: '',
@@ -162,7 +163,7 @@ export function AdminPeserta() {
   const handleExport = () => {
     // Basic CSV export
     const headers = ['Nama Peserta', 'Kabupaten/Kota', 'Sekolah', 'Kategori', 'Media', 'Status'];
-    const rows = pesertaList.map(p => {
+    const rows = filteredPeserta.map(p => {
       const status = getStatus(p);
       return [
         p.namaPeserta, p.kabupatenKota, p.namaSekolah, p.kategori, p.namaMedia, status
@@ -188,6 +189,10 @@ export function AdminPeserta() {
     });
   };
 
+  const filteredPeserta = filterCategory === 'Semua' 
+    ? pesertaList 
+    : pesertaList.filter(p => p.kategori === filterCategory);
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-6 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between bg-slate-50">
@@ -195,7 +200,16 @@ export function AdminPeserta() {
            <h2 className="text-lg font-bold text-slate-900">Data Peserta</h2>
            <p className="text-sm text-slate-500">Kelola data peserta lomba dari berbagai kategori.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+           <select 
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value as Kategori | 'Semua')}
+              className="px-3 py-2 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+           >
+              <option value="Semua">Semua Kategori</option>
+              {['TK', 'SLB', 'SD', 'SMP', 'SMA'].map(k => <option key={k} value={k}>{k}</option>)}
+           </select>
+           
            <button onClick={handleDownloadTemplate} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
               <FileText size={16} /> Download Template
            </button>
@@ -232,13 +246,15 @@ export function AdminPeserta() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {pesertaList.length === 0 ? (
+            {filteredPeserta.length === 0 ? (
                <tr>
                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                    Belum ada data peserta. Silakan tambah data atau jalankan import.
+                    {pesertaList.length === 0 
+                      ? "Belum ada data peserta. Silakan tambah data atau jalankan import." 
+                      : "Tidak ada data peserta untuk kategori ini."}
                  </td>
                </tr>
-            ) : pesertaList.map((p) => (
+            ) : filteredPeserta.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="font-medium text-slate-900">{p.namaPeserta}</div>
