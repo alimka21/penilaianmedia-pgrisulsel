@@ -14,8 +14,23 @@ export function calculateNilaiTahap(
     const scores = penilaianStr[juriId].scores;
     let juriScore = 0;
     aspekList.forEach(aspek => {
-      const score = scores[aspek.id] || 0;
-      juriScore += (score * (aspek.bobot / 100));
+      // Periksa apakah ini format lama (skor berdasarkan aspek.id skala 0-100)
+      // Jika ya, gunakan. Jika tidak, hitung dari indikator (skala 1-5)
+      if (scores[aspek.id] !== undefined && Object.keys(scores).includes(aspek.id)) {
+         juriScore += (scores[aspek.id] * (aspek.bobot / 100));
+      } else {
+         const numIndikator = aspek.indikator.length;
+         if (numIndikator > 0) {
+            let sumIndikator = 0;
+            aspek.indikator.forEach(ind => {
+               // skor tiap indikator adalah dari 1-5
+               sumIndikator += (scores[ind.id] || 0); 
+            });
+            const maxIndikatorScore = numIndikator * 5;
+            const aspectScore100 = (sumIndikator / maxIndikatorScore) * 100;
+            juriScore += (aspectScore100 * (aspek.bobot / 100));
+         }
+      }
     });
     totalAllJuri += juriScore;
   });

@@ -94,15 +94,15 @@ export function AdminSettings() {
                
                <div>
                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-semibold text-slate-500">Maksimal 3 Indikator</label>
+                    <label className="text-xs font-semibold text-slate-500">Daftar Indikator</label>
                     <button 
-                       disabled={aspek.indikator.length >= 3}
+                       disabled={false}
                        onClick={() => {
                           const newItems = [...items];
                           newItems[i].indikator.push({ id: Math.random().toString(), deskripsi: "Indikator Baru" });
                           setter(newItems);
                        }}
-                       className="text-xs bg-slate-200 px-2 py-1 rounded text-slate-700 hover:bg-slate-300 disabled:opacity-50"
+                       className="text-xs bg-slate-200 px-2 py-1 rounded text-slate-700 hover:bg-slate-300"
                     >
                        + Tambah
                     </button>

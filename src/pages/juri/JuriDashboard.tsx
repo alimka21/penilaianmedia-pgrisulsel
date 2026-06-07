@@ -64,9 +64,9 @@ export function JuriDashboard() {
 
   // Filter list: Media judges see their category. Presentasi judges see everyone who completed media judging.
   // We can just show everyone to Presentasi judges, or everyone who is done with Media. Let's say presentasi judges see everyone.
-  const filteredPeserta = isPresentasi 
+  const filteredPeserta = user.kategori === 'Semua'
       ? pesertaList 
-      : pesertaList.filter(p => p.kategori === juriKategori);
+      : pesertaList.filter(p => p.kategori === user.kategori);
 
   const handleSelectPeserta = (p: Peserta) => {
     setSelectedPeserta(p);
@@ -79,7 +79,11 @@ export function JuriDashboard() {
        setFormScores({ ...existingPenilaian });
     } else {
        const initialScores: Record<string, number> = {};
-       activeAspek.forEach(a => initialScores[a.id] = 0);
+       activeAspek.forEach(a => {
+          a.indikator.forEach(ind => {
+             initialScores[ind.id] = 0;
+          });
+       });
        setFormScores(initialScores);
     }
   };
@@ -110,8 +114,19 @@ export function JuriDashboard() {
   const calculateFinalLocal = () => {
       let total = 0;
       activeAspek.forEach(a => {
-         const score = formScores[a.id] || 0;
-         total += (score * (a.bobot / 100));
+         if (formScores[a.id] !== undefined && Object.keys(formScores).includes(a.id)) {
+            total += (formScores[a.id] * (a.bobot / 100));
+         } else {
+            const numIndikator = a.indikator.length;
+            if (numIndikator > 0) {
+               let sumIndikator = 0;
+               a.indikator.forEach(ind => {
+                  sumIndikator += (formScores[ind.id] || 0);
+               });
+               const aspectScore100 = (sumIndikator / (numIndikator * 5)) * 100;
+               total += (aspectScore100 * (a.bobot / 100));
+            }
+         }
       });
       return total;
   };
@@ -202,7 +217,17 @@ export function JuriDashboard() {
                 <div className="w-full lg:w-[400px] flex flex-col items-stretch bg-white shrink-0">
                     <div className="p-6 pb-2 shrink-0 border-b border-slate-100">
                         <h3 className="font-bold text-lg">Form Penilaian ({isPresentasi ? 'Tahap Presentasi' : 'Tahap Media'})</h3>
-                        <p className="text-xs text-slate-500 mt-1">Bobot Total: 100% dari tahap ini.</p>
+                        <p className="text-xs text-slate-500 mt-1 mb-3">Bobot Total: 100% dari tahap ini.</p>
+                        <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-lg text-xs text-blue-800 space-y-1 mb-2">
+                          <p className="font-bold">Keterangan Nilai (1-5):</p>
+                          <ul className="grid grid-cols-2 gap-x-2 gap-y-1 ml-1 text-[11px]">
+                            <li><b>1</b> = Sangat Kurang / Tidak Memenuhi</li>
+                            <li><b>2</b> = Kurang</li>
+                            <li><b>3</b> = Cukup</li>
+                            <li><b>4</b> = Baik</li>
+                            <li className="col-span-2"><b>5</b> = Sangat Baik</li>
+                          </ul>
+                        </div>
                     </div>
                     <form id="penilaian-form" onSubmit={handleSavePenilaian} className="flex-1 overflow-y-auto p-6 space-y-4">
                         {activeAspek.map(aspek => {
@@ -224,23 +249,40 @@ export function JuriDashboard() {
                                    </div>
                                 </div>
                                 {isExpanded && (
-                                  <div className="px-4 pb-4 border-t border-slate-100 pt-3">
-                                     <ul className="list-disc list-inside text-xs text-slate-500 mb-4 space-y-1">
+                                  <div className="p-4 border-t border-slate-100 bg-slate-50">
+                                     <div className="space-y-4">
                                         {aspek.indikator.map(ind => (
-                                           <li key={ind.id}>{ind.deskripsi}</li>
+                                           <div key={ind.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:border-slate-300">
+                                              <p className="text-sm font-medium text-slate-800 mb-3">{ind.deskripsi}</p>
+                                              <div className="flex gap-2">
+                                                 {[
+                                                   { v: 1, label: 'Sangat Kurang' },
+                                                   { v: 2, label: 'Kurang' },
+                                                   { v: 3, label: 'Cukup' },
+                                                    { v: 4, label: 'Baik' },
+                                                    { v: 5, label: 'Sangat Baik' }
+                                                 ].map(({ v, label }) => (
+                                                    <button
+                                                       key={v}
+                                                       type="button"
+                                                       onClick={(e) => { e.stopPropagation(); handleScoreChange(ind.id, v); }}
+                                                       className={`flex-1 min-w-0 flex flex-col items-center justify-center py-2 px-1 rounded-lg border transition-all shadow-sm ${
+                                                          formScores[ind.id] === v 
+                                                             ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-600 outline-none' 
+                                                             : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                                       }`}
+                                                       title={label}
+                                                    >
+                                                       <span className="text-lg font-bold block leading-none mb-1">{v}</span>
+                                                       <span className="text-[10px] text-center leading-tight sm:text-[10px]">{label}</span>
+                                                    </button>
+                                                 ))}
+                                              </div>
+                                           </div>
                                         ))}
-                                     </ul>
+                                     </div>
                                   </div>
                                 )}
-                                <div className="px-4 pb-4 flex items-center justify-end gap-3 pt-2">
-                                      <span className="text-xs font-medium text-slate-600">Nilai (0-100):</span>
-                                      <input type="number" min="0" max="100" required 
-                                         className="w-20 border border-slate-300 p-2 rounded-lg text-sm bg-white font-medium text-center focus:ring-2 focus:ring-blue-500 outline-none" 
-                                         value={formScores[aspek.id] || 0} 
-                                         onChange={e => handleScoreChange(aspek.id, Number(e.target.value))} 
-                                         onClick={e => e.stopPropagation()}
-                                      />
-                                </div>
                              </div>
                             );
                         })}

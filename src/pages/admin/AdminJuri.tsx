@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { UserPlus, Trash2, Edit2, Eye, EyeOff } from "lucide-react";
 import Swal from 'sweetalert2';
 import { useDataStore, JuriAccount } from "@/store/useDataStore";
@@ -6,53 +6,50 @@ import { useDataStore, JuriAccount } from "@/store/useDataStore";
 export function AdminJuri() {
   const { juriList, updateJuri, deleteJuri, addJuri } = useDataStore();
   const [showPasswordMap, setShowPasswordMap] = React.useState<Record<string, boolean>>({});
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<JuriAccount>>({
+    name: '',
+    username: '',
+    passwordText: '',
+    kategori: 'Semua',
+    role: 'juri-media',
+    status: 'Aktif'
+  });
 
   const togglePassword = (id: string) => {
     setShowPasswordMap(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleCreate = () => {
-    Swal.fire({
-      icon: 'info',
-      title: 'Fitur Belum Tersedia',
-      text: 'Fitur pembuatan akun juri kustom akan hadir pada versi selanjutnya.'
+  const openAddModal = () => {
+    setEditingId(null);
+    setForm({
+      name: '',
+      username: '',
+      passwordText: '',
+      kategori: 'GURU SD/MI/SEDERAJAT',
+      role: 'juri-media',
+      status: 'Aktif'
     });
+    setIsModalOpen(true);
   };
 
-  const handleEdit = async (juri: JuriAccount) => {
-    const { value: formValues } = await Swal.fire({
-      title: `Edit Akun ${juri.name}`,
-      html: `
-        <div class="space-y-4 text-left p-2">
-           <div>
-             <label class="block text-sm font-medium mb-1">Nama Juri</label>
-             <input id="swal-input1" class="swal2-input !w-full !m-0" value="${juri.name}">
-           </div>
-           <div>
-             <label class="block text-sm font-medium mb-1">Username</label>
-             <input id="swal-input2" class="swal2-input !w-full !m-0" value="${juri.username}">
-           </div>
-           <div>
-             <label class="block text-sm font-medium mb-1">Password</label>
-             <input id="swal-input3" class="swal2-input !w-full !m-0" value="${juri.passwordText}">
-           </div>
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Simpan',
-      cancelButtonText: 'Batal',
-      preConfirm: () => {
-        return {
-          name: (document.getElementById('swal-input1') as HTMLInputElement).value,
-          username: (document.getElementById('swal-input2') as HTMLInputElement).value,
-          passwordText: (document.getElementById('swal-input3') as HTMLInputElement).value
-        };
-      }
-    });
+  const openEditModal = (juri: JuriAccount) => {
+    setEditingId(juri.id);
+    setForm(juri);
+    setIsModalOpen(true);
+  };
 
-    if (formValues) {
-      updateJuri(juri.id, formValues);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+  };
+
+  const handleAddOrEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId) {
+      updateJuri(editingId, form as Partial<JuriAccount>);
       Swal.fire({
         icon: 'success',
         title: 'Berhasil',
@@ -60,7 +57,17 @@ export function AdminJuri() {
         timer: 1500,
         showConfirmButton: false
       });
+    } else {
+      addJuri(form as Omit<JuriAccount, 'id'>);
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Akun Juri berhasil ditambahkan',
+        timer: 1500,
+        showConfirmButton: false
+      });
     }
+    closeModal();
   };
 
   const handleDelete = (id: string, name: string) => {
@@ -92,7 +99,7 @@ export function AdminJuri() {
            <h2 className="text-lg font-bold text-slate-900">Manajemen Akun Juri</h2>
            <p className="text-sm text-slate-500">Kelola akun untuk dewan juri tiap kategori.</p>
         </div>
-        <button onClick={handleCreate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+        <button onClick={openAddModal} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
            <UserPlus size={16} /> Buat Akun Juri
         </button>
       </div>
@@ -137,7 +144,7 @@ export function AdminJuri() {
                 </td>
                 <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center gap-2">
-                     <button onClick={() => handleEdit(j)} className="text-blue-500 hover:text-blue-700 transition-colors p-1" title="Edit Juri">
+                     <button onClick={() => openEditModal(j)} className="text-blue-500 hover:text-blue-700 transition-colors p-1" title="Edit Juri">
                        <Edit2 size={16} />
                      </button>
                      <button onClick={() => handleDelete(j.id, j.name)} className="text-red-500 hover:text-red-700 transition-colors p-1" title="Hapus Juri">
@@ -150,6 +157,58 @@ export function AdminJuri() {
           </tbody>
         </table>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+             <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white">
+                <h3 className="text-lg font-bold">{editingId ? 'Edit Akun Juri' : 'Buat Akun Juri'}</h3>
+                <button type="button" onClick={closeModal} className="text-slate-400 hover:text-slate-700">&times;</button>
+             </div>
+             <form onSubmit={handleAddOrEdit} className="p-6 space-y-4">
+                <div>
+                   <label className="block text-sm font-medium mb-1">Nama Juri</label>
+                   <input required type="text" className="w-full border p-2 rounded" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Username</label>
+                   <input required type="text" className="w-full border p-2 rounded" value={form.username} onChange={e => setForm({...form, username: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Password</label>
+                   <input required type="text" className="w-full border p-2 rounded" value={form.passwordText} onChange={e => setForm({...form, passwordText: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Peran (Role)</label>
+                   <select className="w-full border p-2 rounded" value={form.role} onChange={e => setForm({...form, role: e.target.value as 'juri-media' | 'juri-presentasi'})}>
+                      <option value="juri-media">Juri Media</option>
+                      <option value="juri-presentasi">Juri Presentasi</option>
+                   </select>
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Kategori</label>
+                   <select className="w-full border p-2 rounded" value={form.kategori} onChange={e => setForm({...form, kategori: e.target.value})}>
+                      <option value="Semua">Semua</option>
+                      <option value="GURU SD/MI/SEDERAJAT">GURU SD/MI/SEDERAJAT</option>
+                      <option value="GURU SMP/MTS/SEDERAJAT">GURU SMP/MTS/SEDERAJAT</option>
+                      <option value="GURU SMA/SMK/MA/SEDERAJAT">GURU SMA/SMK/MA/SEDERAJAT</option>
+                      <option value="GURU SLB">GURU SLB</option>
+                   </select>
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Status</label>
+                   <select className="w-full border p-2 rounded" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+                      <option value="Aktif">Aktif</option>
+                      <option value="Nonaktif">Nonaktif</option>
+                   </select>
+                </div>
+                <div className="text-right pt-4 border-t">
+                   <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700">Simpan Data</button>
+                </div>
+             </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
