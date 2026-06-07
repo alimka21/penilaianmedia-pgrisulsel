@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Kategori = 'TK' | 'SLB' | 'SD' | 'SMP' | 'SMA';
+export type Kategori = 'GURU SD/MI/SEDERAJAT' | 'GURU SMP/MTS/SEDERAJAT' | 'GURU SMA/SMK/MA/SEDERAJAT' | 'GURU SLB';
 
 export interface Indikator {
   id: string;
@@ -117,11 +117,10 @@ const defaultAspekPresentasi: Aspek[] = [
 ];
 
 const defaultJuriList: JuriAccount[] = [
-  { id: "j1", name: "Juri Media TK", username: "juritk", passwordText: "juri", kategori: "TK", role: 'juri-media', status: "Aktif" },
-  { id: "j2", name: "Juri Media SLB", username: "jurimediaslb", passwordText: "juri", kategori: "SLB", role: 'juri-media', status: "Aktif" },
-  { id: "j3", name: "Juri Media SD", username: "jurimediasd", passwordText: "juri", kategori: "SD", role: 'juri-media', status: "Aktif" },
-  { id: "j4", name: "Juri Media SMP", username: "jurimediasmp", passwordText: "juri", kategori: "SMP", role: 'juri-media', status: "Aktif" },
-  { id: "j5", name: "Juri Media SMA", username: "jurimediasma", passwordText: "juri", kategori: "SMA", role: 'juri-media', status: "Aktif" },
+  { id: "j2", name: "Juri Media SLB", username: "jurimediaslb", passwordText: "juri", kategori: "GURU SLB", role: 'juri-media', status: "Aktif" },
+  { id: "j3", name: "Juri Media SD/MI", username: "jurimediasd", passwordText: "juri", kategori: "GURU SD/MI/SEDERAJAT", role: 'juri-media', status: "Aktif" },
+  { id: "j4", name: "Juri Media SMP/MTS", username: "jurimediasmp", passwordText: "juri", kategori: "GURU SMP/MTS/SEDERAJAT", role: 'juri-media', status: "Aktif" },
+  { id: "j5", name: "Juri Media SMA/SMK", username: "jurimediasma", passwordText: "juri", kategori: "GURU SMA/SMK/MA/SEDERAJAT", role: 'juri-media', status: "Aktif" },
   { id: "j6", name: "Juri Presentasi 1", username: "juripertama", passwordText: "juri", kategori: "Semua", role: 'juri-presentasi', status: "Aktif" },
   { id: "j7", name: "Juri Presentasi 2", username: "jurikedua", passwordText: "juri", kategori: "Semua", role: 'juri-presentasi', status: "Aktif" },
   { id: "j8", name: "Juri Presentasi 3", username: "juriketiga", passwordText: "juri", kategori: "Semua", role: 'juri-presentasi', status: "Aktif" },

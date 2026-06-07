@@ -81,12 +81,12 @@ export function AdminPeserta() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
-    setForm({kategori: 'TK'});
+    setForm({kategori: 'GURU SD/MI/SEDERAJAT'});
   };
 
   const handleDownloadTemplate = () => {
     const headers = ['Nama Peserta', 'Kabupaten/Kota', 'Nama Sekolah', 'Nomor HP', 'Kategori', 'Nama Media', 'Link YouTube', 'Link RPP', 'Link Media'];
-    const exampleRow = ['Budi Santoso', 'Kota Surabaya', 'SDN 1 Surabaya', '081234567890', 'SD', 'Media Belajar Asik', 'https://youtu.be/contoh', 'https://drive.google.com/contoh-rpp', 'https://drive.google.com/contoh-media'];
+    const exampleRow = ['Budi Santoso', 'Kota Makassar', 'SDN 1 Makassar', '081234567890', 'GURU SD/MI/SEDERAJAT', 'Media Belajar Asik', 'https://youtu.be/contoh', 'https://drive.google.com/contoh-rpp', 'https://drive.google.com/contoh-media'];
     const csvContent = [headers.join(','), exampleRow.map(field => `"${field}"`).join(',')].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -114,7 +114,7 @@ export function AdminPeserta() {
             kabupatenKota: row['Kabupaten/Kota'] || '',
             namaSekolah: row['Nama Sekolah'] || '',
             nomorHp: row['Nomor HP'] || '',
-            kategori: (row['Kategori'] || 'TK') as Kategori,
+            kategori: (row['Kategori'] || 'GURU SD/MI/SEDERAJAT') as Kategori,
             namaMedia: row['Nama Media'] || '',
             linkYoutube: row['Link YouTube'] || '',
             linkRpp: row['Link RPP'] || '',
@@ -207,7 +207,7 @@ export function AdminPeserta() {
               className="px-3 py-2 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
            >
               <option value="Semua">Semua Kategori</option>
-              {['TK', 'SLB', 'SD', 'SMP', 'SMA'].map(k => <option key={k} value={k}>{k}</option>)}
+              {['GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
            </select>
            
            <button onClick={handleDownloadTemplate} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
@@ -284,6 +284,11 @@ export function AdminPeserta() {
                        />
                      )}
                   </div>
+                  <div className="mt-2 flex gap-1.5 flex-wrap">
+                     <a href={p.linkYoutube} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-0.5 bg-red-50 text-red-600 hover:text-red-700 rounded border border-red-100 transition-colors">YouTube</a>
+                     <a href={p.linkRpp} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 hover:text-blue-700 rounded border border-blue-100 transition-colors">RPP</a>
+                     <a href={p.linkMedia} target="_blank" rel="noreferrer" className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 hover:text-indigo-700 rounded border border-indigo-100 transition-colors">Media</a>
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700`}>
@@ -330,7 +335,7 @@ export function AdminPeserta() {
                 <div className="col-span-2 md:col-span-1">
                    <label className="block text-sm font-medium mb-1">Kategori</label>
                    <select className="w-full border p-2 rounded" value={form.kategori} onChange={e => setForm({...form, kategori: e.target.value as Kategori})}>
-                      {['TK', 'SLB', 'SD', 'SMP', 'SMA'].map(k => <option key={k} value={k}>{k}</option>)}
+                      {['GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
                    </select>
                 </div>
                 <div className="col-span-2">

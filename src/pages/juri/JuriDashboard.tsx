@@ -4,7 +4,7 @@ const logoPgri = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Persatuan_
 import { useAuthStore } from "@/store/useAuthStore";
 import { useDataStore, Peserta, Aspek } from "@/store/useDataStore";
 import { getStatus } from "@/lib/scoreUtils";
-import { LogOut, ListTodo, CheckCircle2, XCircle, FileText, Play, ArrowLeft, Maximize, ChevronDown, ChevronUp } from "lucide-react";
+import { LogOut, ListTodo, CheckCircle2, XCircle, FileText, Play, ArrowLeft, Maximize, ChevronDown, ChevronUp, Monitor } from "lucide-react";
 import Swal from 'sweetalert2';
 
 export function JuriDashboard() {
@@ -185,12 +185,15 @@ export function JuriDashboard() {
                            </button>
                        )}
                    </div>
-                   <div className="flex gap-4">
+                   <div className="flex flex-wrap gap-4 justify-center">
                       <a href={selectedPeserta.linkYoutube} target="_blank" rel="noreferrer" className={`flex items-center gap-2 px-4 py-2 ${isFullscreen ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-slate-700 border-slate-200'} rounded-lg shadow-sm border hover:bg-slate-50 hover:text-slate-900 transition`}>
                          <Play size={16} className={isFullscreen ? "text-red-400" : "text-red-600"} /> Buka di YouTube
                       </a>
                       <a href={selectedPeserta.linkRpp} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 transition">
                          <FileText size={16} className="text-blue-600" /> Buka RPP
+                      </a>
+                      <a href={selectedPeserta.linkMedia} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 transition">
+                         <Monitor size={16} className="text-indigo-600" /> Buka Media
                       </a>
                    </div>
                 </div>
