@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 
 export function JuriDashboard() {
   const { user, logout } = useAuthStore();
-  const { pesertaList, updatePenilaianMedia, updatePenilaianPresentasi, aspekMedia, aspekPresentasi } = useDataStore();
+  const { pesertaList, updatePenilaianMedia, updatePenilaianPresentasi, aspekMedia, aspekPresentasi, juriList } = useDataStore();
   const navigate = useNavigate();
   
   const [selectedPeserta, setSelectedPeserta] = useState<Peserta | null>(null);
@@ -26,10 +26,22 @@ export function JuriDashboard() {
     );
   };
 
-  const getYoutubeEmbedUrl = (url: string) => {
+  const getMediaEmbedUrl = (url: string) => {
     if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    
+    // Check YouTube
+    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytMatch) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    }
+
+    // Check Google Drive
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^\/]+)\//i);
+    if (driveMatch) {
+      return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+    }
+
+    return null;
   };
 
   const handleLogout = () => {
@@ -58,15 +70,19 @@ export function JuriDashboard() {
   if (!user || user.role === "admin") return null;
 
   const isPresentasi = user.role === 'juri-presentasi';
-  const juriTitle = isPresentasi ? 'Juri Presentasi' : `Juri Media (${user.kategori})`;
-  const juriKategori = user.kategori;
+  
+  // Resolve kategori using juriList in case user state is stale
+  const currentJuri = juriList.find(j => j.username === user.username);
+  const juriKategori = currentJuri ? currentJuri.kategori : (user.kategori || 'Semua');
+  
+  const juriTitle = isPresentasi ? 'Juri Presentasi' : `Juri Media (${juriKategori})`;
   const activeAspek = isPresentasi ? aspekPresentasi : aspekMedia;
 
   // Filter list: Media judges see their category. Presentasi judges see everyone who completed media judging.
   // We can just show everyone to Presentasi judges, or everyone who is done with Media. Let's say presentasi judges see everyone.
-  const filteredPeserta = user.kategori === 'Semua'
+  const filteredPeserta = juriKategori === 'Semua'
       ? pesertaList 
-      : pesertaList.filter(p => p.kategori === user.kategori);
+      : pesertaList.filter(p => p.kategori === juriKategori);
 
   const handleSelectPeserta = (p: Peserta) => {
     setSelectedPeserta(p);
@@ -95,6 +111,32 @@ export function JuriDashboard() {
   const handleSavePenilaian = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedPeserta) {
+       let isValid = true;
+       for (const a of activeAspek) {
+          if (a.indikator && a.indikator.length > 0) {
+             for (const ind of a.indikator) {
+                if (formScores[ind.id] === undefined) {
+                   isValid = false;
+                   break;
+                }
+             }
+          } else {
+             if (formScores[a.id] === undefined) {
+                 isValid = false;
+             }
+          }
+          if (!isValid) break;
+       }
+
+       if (!isValid) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Penilaian Belum Lengkap',
+            text: 'Mohon isi semua indikator penilaian (wajib) sebelum menyimpan.',
+          });
+          return;
+       }
+
        if (isPresentasi) {
           updatePenilaianPresentasi(selectedPeserta.id, user.username, formScores);
        } else {
@@ -170,18 +212,18 @@ export function JuriDashboard() {
                  </button>
                  <div className="font-semibold text-slate-900">{selectedPeserta.namaPeserta} - {selectedPeserta.namaMedia}</div>
              </div>
-             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+             <div className="flex-1 flex flex-col overflow-y-auto bg-slate-50">
                 {/* Visual Media Viewer */}
-                <div className={`border-r border-slate-200 bg-slate-100 p-6 flex flex-col items-center justify-center overflow-y-auto transition-all ${isFullscreen ? 'fixed inset-0 z-50 bg-black/90' : 'flex-1'}`}>
+                <div className={`border-b border-slate-200 bg-slate-100 p-6 flex flex-col items-center justify-center transition-all ${isFullscreen ? 'fixed inset-0 z-50 bg-black/90' : 'shrink-0'}`}>
                    {isFullscreen && (
                       <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 text-white hover:text-slate-300">
                          <XCircle size={32} />
                       </button>
                    )}
-                   <div className={`${isFullscreen ? 'w-full max-w-5xl h-[80vh]' : 'max-w-full w-full aspect-video'} bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 mb-6 relative overflow-hidden shadow-lg group`}>
-                       {getYoutubeEmbedUrl(selectedPeserta.linkYoutube) ? (
+                   <div className={`${isFullscreen ? 'w-full max-w-5xl h-[80vh]' : 'max-w-2xl w-full aspect-video'} bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 mb-6 relative overflow-hidden shadow-lg group`}>
+                       {getMediaEmbedUrl(selectedPeserta.linkYoutube) ? (
                            <iframe 
-                             src={getYoutubeEmbedUrl(selectedPeserta.linkYoutube)!} 
+                             src={getMediaEmbedUrl(selectedPeserta.linkYoutube)!} 
                              className="w-full h-full border-0" 
                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                              allowFullScreen
@@ -190,7 +232,7 @@ export function JuriDashboard() {
                            <>
                              <Play size={48} className="opacity-50" />
                              <div className="absolute bottom-4 left-4 right-4 text-center text-xs opacity-70">
-                                (Tidak dapat memuat embed YouTube otomatis: {selectedPeserta.linkYoutube})
+                                (Tidak dapat memuat embed otomatis: {selectedPeserta.linkYoutube})
                              </div>
                            </>
                        )}
@@ -202,7 +244,7 @@ export function JuriDashboard() {
                    </div>
                    <div className="flex flex-wrap gap-4 justify-center">
                       <a href={selectedPeserta.linkYoutube} target="_blank" rel="noreferrer" className={`flex items-center gap-2 px-4 py-2 ${isFullscreen ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-slate-700 border-slate-200'} rounded-lg shadow-sm border hover:bg-slate-50 hover:text-slate-900 transition`}>
-                         <Play size={16} className={isFullscreen ? "text-red-400" : "text-red-600"} /> Buka di YouTube
+                         <Play size={16} className={isFullscreen ? "text-red-400" : "text-red-600"} /> Buka Video di Tab Baru
                       </a>
                       <a href={selectedPeserta.linkRpp} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 transition">
                          <FileText size={16} className="text-blue-600" /> Buka RPP
@@ -214,7 +256,7 @@ export function JuriDashboard() {
                 </div>
 
                 {/* Penilaian Form */}
-                <div className="w-full lg:w-[400px] flex flex-col items-stretch bg-white shrink-0">
+                <div className="w-full max-w-4xl mx-auto flex flex-col items-stretch bg-white border-x border-slate-200 min-h-full">
                     <div className="p-6 pb-2 shrink-0 border-b border-slate-100">
                         <h3 className="font-bold text-lg">Form Penilaian ({isPresentasi ? 'Tahap Presentasi' : 'Tahap Media'})</h3>
                         <p className="text-xs text-slate-500 mt-1 mb-3">Bobot Total: 100% dari tahap ini.</p>
@@ -229,7 +271,7 @@ export function JuriDashboard() {
                           </ul>
                         </div>
                     </div>
-                    <form id="penilaian-form" onSubmit={handleSavePenilaian} className="flex-1 overflow-y-auto p-6 space-y-4">
+                    <form id="penilaian-form" onSubmit={handleSavePenilaian} className="flex-1 p-6 space-y-4">
                         {activeAspek.map(aspek => {
                             const isExpanded = expandedAspekIds.includes(aspek.id);
                             return (

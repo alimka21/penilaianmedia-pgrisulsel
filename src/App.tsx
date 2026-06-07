@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useDataStore } from "@/store/useDataStore";
 import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
@@ -27,6 +28,21 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 export default function App() {
+  const { pesertaList, updatePeserta } = useDataStore();
+  
+  React.useEffect(() => {
+     // Migration for legacy category if any
+     const timeout = setTimeout(() => {
+         pesertaList.forEach(p => {
+            if (p.kategori === 'TK' as any) {
+               updatePeserta(p.id, { kategori: 'GURU TK/RA/SEDERAJAT' });
+            }
+         });
+     }, 500);
+     return () => clearTimeout(timeout);
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

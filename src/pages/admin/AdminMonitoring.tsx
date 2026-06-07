@@ -129,16 +129,19 @@ export function AdminMonitoring() {
                     ))}
                  </div>
                  
-                 <div className="flex bg-white rounded-lg border border-slate-200 p-1">
-                    {['ALL', 'GURU TK/RA/SEDERAJAT', 'GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => (
-                       <button
-                         key={k}
-                         onClick={() => setActiveKategori(k as Kategori | 'ALL')}
-                         className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${activeKategori === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                       >
-                          {k}
-                       </button>
-                    ))}
+                 <div className="flex bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <select
+                      value={activeKategori}
+                      onChange={(e) => setActiveKategori(e.target.value as Kategori | 'ALL')}
+                      className="px-3 py-1.5 text-sm font-semibold bg-transparent text-slate-700 outline-none w-full min-w-[200px]"
+                    >
+                      <option value="ALL">Semua Kategori</option>
+                      <option value="GURU TK/RA/SEDERAJAT">GURU TK/RA/SEDERAJAT</option>
+                      <option value="GURU SD/MI/SEDERAJAT">GURU SD/MI/SEDERAJAT</option>
+                      <option value="GURU SMP/MTS/SEDERAJAT">GURU SMP/MTS/SEDERAJAT</option>
+                      <option value="GURU SMA/SMK/MA/SEDERAJAT">GURU SMA/SMK/MA/SEDERAJAT</option>
+                      <option value="GURU SLB">GURU SLB</option>
+                    </select>
                  </div>
               </div>
            </div>
