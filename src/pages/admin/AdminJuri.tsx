@@ -28,7 +28,7 @@ export function AdminJuri() {
       name: '',
       username: '',
       passwordText: '',
-      kategori: 'GURU SD/MI/SEDERAJAT',
+      kategori: 'GURU TK/RA/SEDERAJAT',
       role: 'juri-media',
       status: 'Aktif'
     });
@@ -189,6 +189,7 @@ export function AdminJuri() {
                    <label className="block text-sm font-medium mb-1">Kategori</label>
                    <select className="w-full border p-2 rounded" value={form.kategori} onChange={e => setForm({...form, kategori: e.target.value})}>
                       <option value="Semua">Semua</option>
+                      <option value="GURU TK/RA/SEDERAJAT">GURU TK/RA/SEDERAJAT</option>
                       <option value="GURU SD/MI/SEDERAJAT">GURU SD/MI/SEDERAJAT</option>
                       <option value="GURU SMP/MTS/SEDERAJAT">GURU SMP/MTS/SEDERAJAT</option>
                       <option value="GURU SMA/SMK/MA/SEDERAJAT">GURU SMA/SMK/MA/SEDERAJAT</option>

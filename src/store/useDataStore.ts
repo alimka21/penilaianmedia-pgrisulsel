@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Kategori = 'GURU SD/MI/SEDERAJAT' | 'GURU SMP/MTS/SEDERAJAT' | 'GURU SMA/SMK/MA/SEDERAJAT' | 'GURU SLB';
+export type Kategori = 'GURU TK/RA/SEDERAJAT' | 'GURU SD/MI/SEDERAJAT' | 'GURU SMP/MTS/SEDERAJAT' | 'GURU SMA/SMK/MA/SEDERAJAT' | 'GURU SLB';
 
 export interface Indikator {
   id: string;

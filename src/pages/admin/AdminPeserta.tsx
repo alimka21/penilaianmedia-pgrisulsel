@@ -63,7 +63,7 @@ export function AdminPeserta() {
       kabupatenKota: '',
       namaSekolah: '',
       nomorHp: '',
-      kategori: 'TK',
+      kategori: 'GURU TK/RA/SEDERAJAT',
       namaMedia: '',
       linkYoutube: '',
       linkRpp: '',
@@ -81,12 +81,12 @@ export function AdminPeserta() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
-    setForm({kategori: 'GURU SD/MI/SEDERAJAT'});
+    setForm({kategori: 'GURU TK/RA/SEDERAJAT'});
   };
 
   const handleDownloadTemplate = () => {
     const headers = ['Nama Peserta', 'Kabupaten/Kota', 'Nama Sekolah', 'Nomor HP', 'Kategori', 'Nama Media', 'Link YouTube', 'Link RPP', 'Link Media'];
-    const exampleRow = ['Budi Santoso', 'Kota Makassar', 'SDN 1 Makassar', '081234567890', 'GURU SD/MI/SEDERAJAT', 'Media Belajar Asik', 'https://youtu.be/contoh', 'https://drive.google.com/contoh-rpp', 'https://drive.google.com/contoh-media'];
+    const exampleRow = ['Budi Santoso', 'Kota Makassar', 'SDN 1 Makassar', '081234567890', 'GURU TK/RA/SEDERAJAT', 'Media Belajar Asik', 'https://youtu.be/contoh', 'https://drive.google.com/contoh-rpp', 'https://drive.google.com/contoh-media'];
     const csvContent = [headers.join(','), exampleRow.map(field => `"${field}"`).join(',')].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -114,7 +114,7 @@ export function AdminPeserta() {
             kabupatenKota: row['Kabupaten/Kota'] || '',
             namaSekolah: row['Nama Sekolah'] || '',
             nomorHp: row['Nomor HP'] || '',
-            kategori: (row['Kategori'] || 'GURU SD/MI/SEDERAJAT') as Kategori,
+            kategori: (row['Kategori'] || 'GURU TK/RA/SEDERAJAT') as Kategori,
             namaMedia: row['Nama Media'] || '',
             linkYoutube: row['Link YouTube'] || '',
             linkRpp: row['Link RPP'] || '',
@@ -207,7 +207,7 @@ export function AdminPeserta() {
               className="px-3 py-2 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
            >
               <option value="Semua">Semua Kategori</option>
-              {['GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
+              {['GURU TK/RA/SEDERAJAT', 'GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
            </select>
            
            <button onClick={handleDownloadTemplate} className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
@@ -335,7 +335,7 @@ export function AdminPeserta() {
                 <div className="col-span-2 md:col-span-1">
                    <label className="block text-sm font-medium mb-1">Kategori</label>
                    <select className="w-full border p-2 rounded" value={form.kategori} onChange={e => setForm({...form, kategori: e.target.value as Kategori})}>
-                      {['GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
+                      {['GURU TK/RA/SEDERAJAT', 'GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => <option key={k} value={k}>{k}</option>)}
                    </select>
                 </div>
                 <div className="col-span-2">

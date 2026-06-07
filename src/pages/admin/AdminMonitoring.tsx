@@ -130,7 +130,7 @@ export function AdminMonitoring() {
                  </div>
                  
                  <div className="flex bg-white rounded-lg border border-slate-200 p-1">
-                    {['ALL', 'GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => (
+                    {['ALL', 'GURU TK/RA/SEDERAJAT', 'GURU SD/MI/SEDERAJAT', 'GURU SMP/MTS/SEDERAJAT', 'GURU SMA/SMK/MA/SEDERAJAT', 'GURU SLB'].map(k => (
                        <button
                          key={k}
                          onClick={() => setActiveKategori(k as Kategori | 'ALL')}
