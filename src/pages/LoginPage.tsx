@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logoPgri from "@/assets/logo.png";
+const logoPgri = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Persatuan_Guru_Republik_Indonesia.png";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore, Role } from "@/store/useAuthStore";
 import { Lock, User, ArrowLeft } from "lucide-react";

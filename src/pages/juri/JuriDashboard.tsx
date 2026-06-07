@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoPgri from "@/assets/logo.png";
+const logoPgri = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Persatuan_Guru_Republik_Indonesia.png";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useDataStore, Peserta, Aspek } from "@/store/useDataStore";
 import { getStatus } from "@/lib/scoreUtils";

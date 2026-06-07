@@ -1,4 +1,4 @@
-import logoPgri from "@/assets/logo.png";
+const logoPgri = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Persatuan_Guru_Republik_Indonesia.png";
 import { Link } from "react-router-dom";
 import { BookOpen, Trophy, Users, CheckCircle, Video, Monitor } from "lucide-react";
 

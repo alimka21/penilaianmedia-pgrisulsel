@@ -6,7 +6,7 @@ import { AdminMonitoring } from "./AdminMonitoring";
 import { AdminSettings } from "./AdminSettings";
 import { AdminJuri } from "./AdminJuri";
 import { useState } from "react";
-import logoPgri from "@/assets/logo.png";
+const logoPgri = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Persatuan_Guru_Republik_Indonesia.png";
 import Swal from 'sweetalert2';
 
 export function AdminDashboard() {

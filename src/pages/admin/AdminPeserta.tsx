@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useDataStore, Peserta, Kategori } from "@/store/useDataStore";
 import { getStatus } from "@/lib/scoreUtils";
-import { Trash2, Plus, Download, Upload, FileText } from "lucide-react";
+import { Trash2, Plus, Download, Upload, FileText, Edit2 } from "lucide-react";
 import Swal from 'sweetalert2';
 import Papa from 'papaparse';
 import { YouTubeDurationFetcher } from "@/components/YouTubeDurationFetcher";
@@ -16,6 +16,7 @@ export function AdminPeserta() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { pesertaList, addPeserta, deletePeserta, importPeserta, updatePeserta } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Peserta>>({
     namaPeserta: '',
     kabupatenKota: '',
@@ -34,16 +35,52 @@ export function AdminPeserta() {
     return match ? match[1] : null;
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAddOrEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    addPeserta(form as Omit<Peserta, 'id' | 'penilaianMedia' | 'penilaianPresentasi'>);
-    setIsModalOpen(false);
-    setForm({kategori: 'TK'}); // reset
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: 'Data peserta manual berhasil ditambahkan!'
+    if (editingId) {
+      updatePeserta(editingId, form);
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data peserta berhasil diperbarui!'
+      });
+    } else {
+      addPeserta(form as Omit<Peserta, 'id' | 'penilaianMedia' | 'penilaianPresentasi'>);
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data peserta manual berhasil ditambahkan!'
+      });
+    }
+    closeModal();
+  };
+
+  const openAddModal = () => {
+    setEditingId(null);
+    setForm({
+      namaPeserta: '',
+      kabupatenKota: '',
+      namaSekolah: '',
+      nomorHp: '',
+      kategori: 'TK',
+      namaMedia: '',
+      linkYoutube: '',
+      linkRpp: '',
+      linkMedia: ''
     });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (peserta: Peserta) => {
+    setEditingId(peserta.id);
+    setForm(peserta);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setForm({kategori: 'TK'});
   };
 
   const handleDownloadTemplate = () => {
@@ -175,7 +212,7 @@ export function AdminPeserta() {
            <button onClick={handleExport} className="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
               <Download size={16} /> Export CSV
            </button>
-           <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
+           <button onClick={openAddModal} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
               <Plus size={16} /> Tambah Manual
            </button>
         </div>
@@ -238,9 +275,14 @@ export function AdminPeserta() {
                    </span>
                 </td>
                 <td className="px-6 py-4">
-                  <button onClick={() => handleDelete(p.id, p.namaPeserta)} className="text-red-500 hover:text-red-700 transition-colors p-1" title="Hapus Data">
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => openEditModal(p)} className="text-blue-500 hover:text-blue-700 transition-colors p-1 flex items-center" title="Edit Data">
+                      <Edit2 size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(p.id, p.namaPeserta)} className="text-red-500 hover:text-red-700 transition-colors p-1 flex items-center" title="Hapus Data">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -248,15 +290,15 @@ export function AdminPeserta() {
         </table>
       </div>
 
-      {/* Modal Add Manual (Simplified for demo) */}
+      {/* Modal Add / Edit Manual */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
              <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white">
-                <h3 className="text-lg font-bold">Tambah Peserta Manual</h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700">&times;</button>
+                <h3 className="text-lg font-bold">{editingId ? 'Edit Data Peserta' : 'Tambah Peserta Manual'}</h3>
+                <button onClick={closeModal} className="text-slate-400 hover:text-slate-700">&times;</button>
              </div>
-             <form onSubmit={handleAdd} className="p-6 grid grid-cols-2 gap-4">
+             <form onSubmit={handleAddOrEdit} className="p-6 grid grid-cols-2 gap-4">
                 <div className="col-span-2 md:col-span-1">
                    <label className="block text-sm font-medium mb-1">Nama Peserta</label>
                    <input required type="text" className="w-full border p-2 rounded" value={form.namaPeserta} onChange={e => setForm({...form, namaPeserta: e.target.value})} />
