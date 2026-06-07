@@ -6,6 +6,7 @@ import { AdminMonitoring } from "./AdminMonitoring";
 import { AdminSettings } from "./AdminSettings";
 import { AdminJuri } from "./AdminJuri";
 import { useState } from "react";
+import logoPgri from "@/assets/logo.png";
 import Swal from 'sweetalert2';
 
 export function AdminDashboard() {
@@ -45,7 +46,7 @@ export function AdminDashboard() {
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
              <img 
-                src="/logo.png" 
+                src={logoPgri} 
                 alt="Logo PGRI" 
                 className="w-10 h-10 object-contain bg-white rounded-full p-1"
              />

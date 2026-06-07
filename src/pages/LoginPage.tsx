@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import logoPgri from "@/assets/logo.png";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore, Role } from "@/store/useAuthStore";
 import { Lock, User, ArrowLeft } from "lucide-react";
@@ -69,7 +70,7 @@ export function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="mb-4">
              <img 
-                src="/logo.png" 
+                src={logoPgri} 
                 alt="Logo PGRI" 
                 className="w-16 h-16 object-contain drop-shadow-sm"
              />

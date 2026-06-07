@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import logoPgri from "@/assets/logo.png";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useDataStore, Peserta, Aspek } from "@/store/useDataStore";
 import { getStatus } from "@/lib/scoreUtils";
@@ -122,7 +123,7 @@ export function JuriDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
            <div className="flex items-center gap-3">
               <img 
-                 src="/logo.png" 
+                 src={logoPgri} 
                  alt="Logo PGRI" 
                  className="w-10 h-10 object-contain rounded-full border border-slate-100 p-0.5 shadow-sm"
               />

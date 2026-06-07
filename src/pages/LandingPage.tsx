@@ -1,3 +1,4 @@
+import logoPgri from "@/assets/logo.png";
 import { Link } from "react-router-dom";
 import { BookOpen, Trophy, Users, CheckCircle, Video, Monitor } from "lucide-react";
 
@@ -8,7 +9,7 @@ export function LandingPage() {
       <nav className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <img src="/logo.png" alt="Logo PGRI" className="w-8 h-8 object-contain" />
+             <img src={logoPgri} alt="Logo PGRI" className="w-8 h-8 object-contain" />
              <span className="font-bold text-slate-800 tracking-tight">PGRI Sulsel</span>
           </div>
           <div>
@@ -86,7 +87,7 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="py-12 bg-white text-center">
          <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="Logo PGRI" className="w-12 h-12 object-contain grayscale opacity-50" />
+            <img src={logoPgri} alt="Logo PGRI" className="w-12 h-12 object-contain grayscale opacity-50" />
          </div>
          <p className="text-slate-500 font-medium">PGRI Provinsi Sulawesi Selatan</p>
          <p className="text-slate-400 text-sm mt-2">&copy; {new Date().getFullYear()} Hak Cipta Dilindungi.</p>
