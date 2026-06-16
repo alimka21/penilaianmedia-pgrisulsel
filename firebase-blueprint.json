@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Peserta": {
+      "title": "Peserta",
+      "description": "Data peserta lomba dan nilai dari juri",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "namaPeserta": { "type": "string" },
+        "kabupatenKota": { "type": "string" },
+        "namaSekolah": { "type": "string" },
+        "nomorHp": { "type": "string" },
+        "kategori": { "type": "string" },
+        "namaMedia": { "type": "string" },
+        "linkYoutube": { "type": "string" },
+        "linkRpp": { "type": "string" },
+        "linkMedia": { "type": "string" },
+        "durasiVideo": { "type": "string" },
+        "penilaianMedia": { "type": "object" },
+        "penilaianPresentasi": { "type": "object" }
+      },
+      "required": ["id", "namaPeserta", "kategori"]
+    },
+    "Juri": {
+      "title": "Juri",
+      "description": "Akun juri penilaian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "passwordText": { "type": "string" },
+        "kategori": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "name", "username", "passwordText", "role"]
+    },
+    "Aspek": {
+      "title": "Aspek Penilaian",
+      "description": "Kriteria aspek penilaian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "bobot": { "type": "number" },
+        "indikator": { "type": "array" }
+      },
+      "required": ["id", "nama", "bobot"]
+    }
+  },
+  "firestore": {
+    "/peserta/{pesertaId}": {
+      "schema": "Peserta",
+      "description": "Koleksi data peserta dan penilaian juri"
+    },
+    "/juri/{juriId}": {
+      "schema": "Juri",
+      "description": "Koleksi akun juri"
+    },
+    "/aspekMedia/{aspekMediaId}": {
+      "schema": "Aspek",
+      "description": "Koleksi aspek penilaian media"
+    },
+    "/aspekPresentasi/{aspekPresentasiId}": {
+      "schema": "Aspek",
+      "description": "Koleksi aspek penilaian presentasi"
+    }
+  }
+}

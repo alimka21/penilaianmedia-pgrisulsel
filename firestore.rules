@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // participants (peserta) collection
+    match /peserta/{pesertaId} {
+      allow read, write: if true;
+    }
+    
+    // juries (juri) collection
+    match /juri/{juriId} {
+      allow read, write: if true;
+    }
+    
+    // aspects (aspek) configs
+    match /aspekMedia/{aspekMediaId} {
+      allow read, write: if true;
+    }
+    
+    match /aspekPresentasi/{aspekPresentasiId} {
+      allow read, write: if true;
+    }
+  }
+}

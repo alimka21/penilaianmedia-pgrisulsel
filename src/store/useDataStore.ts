@@ -1,5 +1,16 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { db } from '@/lib/firebase';
+import { handleFirestoreError, OperationType } from '@/lib/firebaseError';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  writeBatch,
+  getDocs
+} from 'firebase/firestore';
 
 export type Kategori = 'GURU TK/RA/SEDERAJAT' | 'GURU SD/MI/SEDERAJAT' | 'GURU SMP/MTS/SEDERAJAT' | 'GURU SMA/SMK/MA/SEDERAJAT' | 'GURU SLB';
 
@@ -144,63 +155,223 @@ interface DataState {
   updateAspekPresentasi: (aspek: Aspek[]) => void;
 }
 
-export const useDataStore = create<DataState>()(
-  persist(
-    (set) => ({
-      pesertaList: [],
-      juriList: defaultJuriList,
-      aspekMedia: defaultAspekMedia,
-      aspekPresentasi: defaultAspekPresentasi,
-      addPeserta: (pesertaInput) => set((state) => ({
-        pesertaList: [
-          ...state.pesertaList,
-          {
-            ...pesertaInput,
-            id: Math.random().toString(36).substr(2, 9),
-            penilaianMedia: {},
-            penilaianPresentasi: {}
-          }
-        ]
-      })),
-      importPeserta: (pesertasListInput) => set((state) => {
-        const newPeserta = pesertasListInput.map(p => ({
+export const useDataStore = create<DataState>()((set) => ({
+  pesertaList: [],
+  juriList: [],
+  aspekMedia: [],
+  aspekPresentasi: [],
+
+  addPeserta: async (pesertaInput) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    const newPeserta: Peserta = {
+      ...pesertaInput,
+      id,
+      penilaianMedia: {},
+      penilaianPresentasi: {}
+    };
+    try {
+      await setDoc(doc(db, 'peserta', id), newPeserta);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${id}`);
+    }
+  },
+
+  importPeserta: async (pesertasListInput) => {
+    try {
+      const batch = writeBatch(db);
+      pesertasListInput.forEach(p => {
+        const id = Math.random().toString(36).substring(2, 11);
+        const newPeserta: Peserta = {
           ...p,
-          id: Math.random().toString(36).substr(2, 9),
+          id,
           penilaianMedia: {},
           penilaianPresentasi: {}
-        }));
-        return { pesertaList: [...state.pesertaList, ...newPeserta] };
-      }),
-      updatePeserta: (id, update) => set((state) => ({
-        pesertaList: state.pesertaList.map(p => p.id === id ? { ...p, ...update } : p)
-      })),
-      deletePeserta: (id) => set((state) => ({
-        pesertaList: state.pesertaList.filter(p => p.id !== id)
-      })),
-      addJuri: (juriInput) => set((state) => ({
-        juriList: [...state.juriList, { ...juriInput, id: Math.random().toString(36).substr(2, 9) }]
-      })),
-      updateJuri: (id, juriUpdate) => set((state) => ({
-        juriList: state.juriList.map(j => j.id === id ? { ...j, ...juriUpdate } : j)
-      })),
-      deleteJuri: (id) => set((state) => ({
-        juriList: state.juriList.filter(j => j.id !== id)
-      })),
-      updatePenilaianMedia: (pesertaId, juriId, scores) => set((state) => ({
-        pesertaList: state.pesertaList.map(p => 
-          p.id === pesertaId ? { ...p, penilaianMedia: { ...(p.penilaianMedia || {}), [juriId]: { scores } } } : p
-        )
-      })),
-      updatePenilaianPresentasi: (pesertaId, juriId, scores) => set((state) => ({
-        pesertaList: state.pesertaList.map(p => 
-          p.id === pesertaId ? { ...p, penilaianPresentasi: { ...(p.penilaianPresentasi || {}), [juriId]: { scores } } } : p
-        )
-      })),
-      updateAspekMedia: (aspekMedia) => set({ aspekMedia }),
-      updateAspekPresentasi: (aspekPresentasi) => set({ aspekPresentasi })
-    }),
-    {
-      name: 'lomba-media-storage-v2',
+        };
+        batch.set(doc(db, 'peserta', id), newPeserta);
+      });
+      await batch.commit();
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'peserta/batch');
     }
-  )
-);
+  },
+
+  updatePeserta: async (id, update) => {
+    try {
+      // Filter out keys that might have undefined values to keep firestore safe
+      const cleanUpdate: Record<string, any> = {};
+      Object.entries(update).forEach(([key, val]) => {
+        if (val !== undefined) {
+          cleanUpdate[key] = val;
+        }
+      });
+      await updateDoc(doc(db, 'peserta', id), cleanUpdate);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${id}`);
+    }
+  },
+
+  deletePeserta: async (id) => {
+    try {
+      await deleteDoc(doc(db, 'peserta', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `peserta/${id}`);
+    }
+  },
+
+  addJuri: async (juriInput) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    const newJuri: JuriAccount = { 
+      ...juriInput, 
+      id 
+    };
+    try {
+      await setDoc(doc(db, 'juri', id), newJuri);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `juri/${id}`);
+    }
+  },
+
+  updateJuri: async (id, juriUpdate) => {
+    try {
+      const cleanUpdate: Record<string, any> = {};
+      Object.entries(juriUpdate).forEach(([key, val]) => {
+        if (val !== undefined) {
+          cleanUpdate[key] = val;
+        }
+      });
+      await updateDoc(doc(db, 'juri', id), cleanUpdate);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `juri/${id}`);
+    }
+  },
+
+  deleteJuri: async (id) => {
+    try {
+      await deleteDoc(doc(db, 'juri', id));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `juri/${id}`);
+    }
+  },
+
+  updatePenilaianMedia: async (pesertaId, juriId, scores) => {
+    try {
+      // Use dot notation to securely update specific jury's grading without overwriting others
+      await updateDoc(doc(db, 'peserta', pesertaId), {
+        [`penilaianMedia.${juriId}`]: { scores }
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${pesertaId}/penilaianMedia`);
+    }
+  },
+
+  updatePenilaianPresentasi: async (pesertaId, juriId, scores) => {
+    try {
+      // Use dot notation to securely update specific jury's grading without overwriting others
+      await updateDoc(doc(db, 'peserta', pesertaId), {
+        [`penilaianPresentasi.${juriId}`]: { scores }
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${pesertaId}/penilaianPresentasi`);
+    }
+  },
+
+  updateAspekMedia: async (aspekMedia) => {
+    try {
+      const batch = writeBatch(db);
+      aspekMedia.forEach(asp => {
+        batch.set(doc(db, 'aspekMedia', asp.id), asp);
+      });
+      await batch.commit();
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'aspekMedia/batch');
+    }
+  },
+
+  updateAspekPresentasi: async (aspekPresentasi) => {
+    try {
+      const batch = writeBatch(db);
+      aspekPresentasi.forEach(asp => {
+        batch.set(doc(db, 'aspekPresentasi', asp.id), asp);
+      });
+      await batch.commit();
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'aspekPresentasi/batch');
+    }
+  }
+}));
+
+// Setup Firestore real-time snapshot listeners to keep local state fully updated
+onSnapshot(collection(db, 'peserta'), (snapshot) => {
+  const pesertas: Peserta[] = [];
+  snapshot.forEach((doc) => {
+    pesertas.push(doc.data() as Peserta);
+  });
+  useDataStore.setState({ pesertaList: pesertas });
+}, (error) => {
+  handleFirestoreError(error, OperationType.LIST, 'peserta');
+});
+
+onSnapshot(collection(db, 'juri'), (snapshot) => {
+  const juris: JuriAccount[] = [];
+  snapshot.forEach((doc) => {
+    juris.push(doc.data() as JuriAccount);
+  });
+  useDataStore.setState({ juriList: juris });
+}, (error) => {
+  handleFirestoreError(error, OperationType.LIST, 'juri');
+});
+
+onSnapshot(collection(db, 'aspekMedia'), (snapshot) => {
+  const asps: Aspek[] = [];
+  snapshot.forEach((doc) => {
+    asps.push(doc.data() as Aspek);
+  });
+  asps.sort((a, b) => a.id.localeCompare(b.id));
+  useDataStore.setState({ aspekMedia: asps });
+}, (error) => {
+  handleFirestoreError(error, OperationType.LIST, 'aspekMedia');
+});
+
+onSnapshot(collection(db, 'aspekPresentasi'), (snapshot) => {
+  const asps: Aspek[] = [];
+  snapshot.forEach((doc) => {
+    asps.push(doc.data() as Aspek);
+  });
+  asps.sort((a, b) => a.id.localeCompare(b.id));
+  useDataStore.setState({ aspekPresentasi: asps });
+}, (error) => {
+  handleFirestoreError(error, OperationType.LIST, 'aspekPresentasi');
+});
+
+// Seed function to initialize Firestore on very first load
+const seedInitialDataIfNeeded = async () => {
+  try {
+    const aspekMediaSnap = await getDocs(collection(db, 'aspekMedia'));
+    if (aspekMediaSnap.empty) {
+      console.log('Seeding default aspekMedia...');
+      for (const asp of defaultAspekMedia) {
+        await setDoc(doc(db, 'aspekMedia', asp.id), asp);
+      }
+    }
+
+    const aspekPresSnap = await getDocs(collection(db, 'aspekPresentasi'));
+    if (aspekPresSnap.empty) {
+      console.log('Seeding default aspekPresentasi...');
+      for (const asp of defaultAspekPresentasi) {
+        await setDoc(doc(db, 'aspekPresentasi', asp.id), asp);
+      }
+    }
+
+    const juriSnap = await getDocs(collection(db, 'juri'));
+    if (juriSnap.empty) {
+      console.log('Seeding default juriList...');
+      for (const jr of defaultJuriList) {
+        await setDoc(doc(db, 'juri', jr.id), jr);
+      }
+    }
+  } catch (error) {
+    console.warn('Seeding was bypassed or failed:', error);
+  }
+};
+
+seedInitialDataIfNeeded();

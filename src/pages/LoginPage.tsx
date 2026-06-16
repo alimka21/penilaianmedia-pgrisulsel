@@ -75,9 +75,9 @@ export function LoginPage() {
                 className="w-16 h-16 object-contain drop-shadow-sm"
              />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Masuk ke Sistem</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Portal Penilaian Juri</h2>
           <p className="text-slate-500 mt-2 text-center text-sm">
-            Gunakan kredensial yang telah diberikan oleh panitia.
+            Khusus Juri Internal Lomba Media Pembelajaran PGRI Sulsel. Gunakan kredensial resmi dari panitia.
           </p>
         </div>
 
@@ -136,10 +136,18 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center space-y-4">
             <p className="text-xs text-slate-400">
                 Lupa kata sandi? Hubungi administrator panitia perlombaan.
             </p>
+            <div className="bg-slate-50 rounded-xl p-3 text-left border border-slate-200">
+               <p className="text-[10px] text-slate-500 leading-relaxed font-sans">
+                  <strong>PEMBERITAHUAN KEAMANAN & PRIVASI:</strong><br />
+                  Aplikasi ini merupakan platform tertutup (private, self-contained portal) yang didesain secara mandiri untuk proses penilaian internal juri Lomba Media Pembelajaran PGRI Sulsel.
+                  Situs ini <strong>tidak</strong> meminta, menyimpan, atau meniru kredensial akun pihak ketiga (seperti Gmail, Facebook, SSO, dll). Akun juri dikelola secara eksklusif oleh panitia lokal.
+                  Kami berkomitmen penuh menjaga keamanan data dan transparansi penilaian.
+               </p>
+            </div>
         </div>
       </div>
     </div>
