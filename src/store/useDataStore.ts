@@ -362,14 +362,6 @@ const seedInitialDataIfNeeded = async () => {
         await setDoc(doc(db, 'aspekPresentasi', asp.id), asp);
       }
     }
-
-    const juriSnap = await getDocs(collection(db, 'juri'));
-    if (juriSnap.empty) {
-      console.log('Seeding default juriList...');
-      for (const jr of defaultJuriList) {
-        await setDoc(doc(db, 'juri', jr.id), jr);
-      }
-    }
   } catch (error) {
     console.warn('Seeding was bypassed or failed:', error);
   }

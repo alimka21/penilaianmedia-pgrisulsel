@@ -22,7 +22,7 @@ export function LoginPage() {
     let userName = "";
     let userKategori = "";
 
-    if (username === "admin" && password === "admin") {
+    if (username === "admin123" && password === "admin99") {
       userRole = "admin";
       userName = "Administrator";
     } else {
