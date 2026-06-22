@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useDataStore, Kategori } from "@/store/useDataStore";
-import { calculateNilaiAkhir, getStatus, calculateCategoryScore } from "@/lib/scoreUtils";
+import { 
+  calculateNilaiAkhir, 
+  getStatus, 
+  calculateCategoryScore, 
+  calculateAspectScore, 
+  calculateAspectScoreForJuri 
+} from "@/lib/scoreUtils";
 import { Download } from "lucide-react";
 
 export function AdminMonitoring() {
-  const { pesertaList, aspekMedia, aspekPresentasi } = useDataStore();
+  const { pesertaList, aspekMedia, aspekPresentasi, juriList } = useDataStore();
   const [activeKategori, setActiveKategori] = useState<Kategori | 'ALL'>('ALL');
 
   // Filter peserta by category
@@ -22,39 +28,113 @@ export function AdminMonitoring() {
 
   // Export ke Excel (CSV)
   const handleExport = () => {
+    // 1. Dapatkan daftar juri yang relevan dengan kategori peserta yang sedang di-ekspor
+    const exportedCategories = new Set<string>(rankedPeserta.map(p => p.kategori));
+    const relevantJuries = juriList.filter(juri => 
+      exportedCategories.has(juri.kategori) || juri.kategori === 'Semua'
+    );
+
+    // Helper untuk memformat kolom CSV dengan aman dari koma atau kutip ganda
+    const escapeCSV = (str: any) => {
+      if (str === null || str === undefined) return '""';
+      const val = String(str);
+      return `"${val.replace(/"/g, '""')}"`;
+    };
+
+    // 2. Tentukan Header Utama
     const headers = [
-      "Peringkat", "Nama Peserta", "Asal Sekolah", "Kabupaten/Kota", "Kategori", "Nama Media", 
-      "Nilai Media (60%)", "Nilai Presentasi (40%)", "Nilai Akhir", "Status"
+      "Peringkat", 
+      "Nama Peserta", 
+      "Asal Sekolah", 
+      "Kabupaten/Kota", 
+      "Kategori", 
+      "Nama Media"
     ];
-    
-    const rows = rankedPeserta.map((p, index) => {
-      const nMedia = calculateCategoryScore(p.penilaianMedia, aspekMedia).toFixed(2);
-      const nPresentasi = calculateCategoryScore(p.penilaianPresentasi, aspekPresentasi).toFixed(2);
-      const nAkhir = calculateNilaiAkhir(p, aspekMedia, aspekPresentasi).toFixed(2);
-      const status = getStatus(p);
-      
-      return [
-        index + 1,
-        `"${p.namaPeserta}"`,
-        `"${p.namaSekolah}"`,
-        `"${p.kabupatenKota}"`,
-        p.kategori,
-        `"${p.namaMedia}"`,
-        nMedia,
-        nPresentasi,
-        nAkhir,
-        `"${status}"`
-      ].join(",");
+
+    // Tambah kolom Aspek Media Pembelajaran (60%)
+    aspekMedia.forEach(aspek => {
+      headers.push(`"Media - ${aspek.nama} (Nilai)"`);
+      // Tambah kolom terperinci untuk masing-masing juri
+      relevantJuries.forEach(juri => {
+         headers.push(`"Media - ${aspek.nama} (Juri: ${juri.name})"`);
+      });
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    // Tambah kolom Aspek Presentasi (40%)
+    aspekPresentasi.forEach(aspek => {
+      headers.push(`"Presentasi - ${aspek.nama} (Rata-rata)"`);
+      // Tambah kolom terperinci untuk masing-masing juri
+      relevantJuries.forEach(juri => {
+         headers.push(`"Presentasi - ${aspek.nama} (Juri: ${juri.name})"`);
+      });
+    });
+
+    // Tambah kolom Total & Status Terintegrasi
+    headers.push("Nilai Akhir Media (60%)");
+    headers.push("Nilai Akhir Presentasi (40%)");
+    headers.push("Nilai Akhir Gabungan");
+    headers.push("Status Penilaian");
+
+    // 3. Masukkan Data Peserta dan Nilai
+    const rows = rankedPeserta.map((p, index) => {
+      const rowData = [
+        index + 1,
+        escapeCSV(p.namaPeserta),
+        escapeCSV(p.namaSekolah),
+        escapeCSV(p.kabupatenKota),
+        p.kategori,
+        escapeCSV(p.namaMedia)
+      ];
+
+      // Nilai per aspek Media Pembelajaran
+      aspekMedia.forEach(aspek => {
+         const aspectScore = calculateAspectScore(p.penilaianMedia, aspek);
+         rowData.push(aspectScore > 0 ? aspectScore.toFixed(2) : '"-"');
+
+         relevantJuries.forEach(juri => {
+            const juriScore = calculateAspectScoreForJuri(p.penilaianMedia, aspek, juri.username);
+            rowData.push(juriScore > 0 ? juriScore.toFixed(2) : '"-"');
+         });
+      });
+
+      // Nilai per aspek Presentasi
+      aspekPresentasi.forEach(aspek => {
+         const aspectScore = calculateAspectScore(p.penilaianPresentasi, aspek);
+         rowData.push(aspectScore > 0 ? aspectScore.toFixed(2) : '"-"');
+
+         relevantJuries.forEach(juri => {
+            const juriScore = calculateAspectScoreForJuri(p.penilaianPresentasi, aspek, juri.username);
+            rowData.push(juriScore > 0 ? juriScore.toFixed(2) : '"-"');
+         });
+      });
+
+      // Skor keseluruhan
+      const nMedia = calculateCategoryScore(p.penilaianMedia, aspekMedia);
+      const nPresentasi = calculateCategoryScore(p.penilaianPresentasi, aspekPresentasi);
+      const nAkhir = calculateNilaiAkhir(p, aspekMedia, aspekPresentasi);
+      const status = getStatus(p);
+
+      rowData.push(nMedia > 0 ? nMedia.toFixed(2) : '"-"');
+      rowData.push(nPresentasi > 0 ? nPresentasi.toFixed(2) : '"-"');
+      rowData.push(nAkhir > 0 ? nAkhir.toFixed(2) : '"-"');
+      rowData.push(escapeCSV(status));
+
+      return rowData.join(",");
+    });
+
+    // 4. Bangun dan trigger download menggunakan Blob & UTF-8 BOM agar terbaca sempurna di Microsoft Excel (Bahasa Indonesia)
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Rekap_Nilai_${activeKategori}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rekap_Nilai_Lengkap_${activeKategori}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
+    
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Progres Kab/Kota

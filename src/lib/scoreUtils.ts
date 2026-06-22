@@ -43,6 +43,40 @@ export function calculateAspectScore(
 }
 
 /**
+ * Calculates the aspect score (0-100) for a specific jury.
+ * Returns 0 if that jury hasn't graded this aspect.
+ */
+export function calculateAspectScoreForJuri(
+  penilaian: Record<string, { scores: Record<string, number> }> | undefined,
+  aspek: Aspek,
+  juriUsername: string
+): number {
+  if (!penilaian || !penilaian[juriUsername]) return 0;
+
+  const scores = penilaian[juriUsername].scores;
+  const numIndikator = aspek.indikator.length;
+  
+  let hasRating = false;
+  let sumIndikator = 0;
+  
+  if (numIndikator > 0) {
+    aspek.indikator.forEach(ind => {
+      if (scores[ind.id] !== undefined && scores[ind.id] > 0) {
+        sumIndikator += scores[ind.id];
+        hasRating = true;
+      }
+    });
+  }
+
+  if (hasRating) {
+    const maxScore = numIndikator * 5;
+    return (sumIndikator / maxScore) * 100;
+  }
+  
+  return 0;
+}
+
+/**
  * Calculates the overall score for a category like Media or Presentasi
  * by weighting the average score of each aspect inside the category list.
  */
