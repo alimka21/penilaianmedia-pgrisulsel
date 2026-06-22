@@ -29,7 +29,7 @@ export function LoginPage() {
       const foundJuri = juriList.find(j => j.username === username && j.passwordText === password);
       
       if (foundJuri) {
-        userRole = foundJuri.role;
+        userRole = foundJuri.role as Role;
         userName = foundJuri.name;
         userKategori = foundJuri.kategori;
       } else {

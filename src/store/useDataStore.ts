@@ -36,8 +36,9 @@ export interface JuriAccount {
   username: string;
   passwordText: string;
   kategori: string;
-  role: 'juri-media' | 'juri-presentasi';
+  role: string;
   status: string;
+  aspekMediaIds?: string[];
 }
 
 export interface Peserta {

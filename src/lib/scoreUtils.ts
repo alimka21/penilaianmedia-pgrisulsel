@@ -1,60 +1,106 @@
 import { Peserta, Aspek } from '@/store/useDataStore';
 
-export function calculateNilaiTahap(
-  penilaianStr: Record<string, { scores: Record<string, number> }> | undefined,
-  aspekList: Aspek[]
+/**
+ * Calculates the score for a specific Aspect ID based on jury entries.
+ * Returns a value from 0 to 100 based on indicators.
+ */
+export function calculateAspectScore(
+  penilaian: Record<string, { scores: Record<string, number> }> | undefined,
+  aspek: Aspek
 ): number {
-  if (!penilaianStr || Object.keys(penilaianStr).length === 0) return 0;
-  
-  // Calculate average if there are multiple juries
-  const juriIds = Object.keys(penilaianStr);
-  let totalAllJuri = 0;
-  
+  if (!penilaian || Object.keys(penilaian).length === 0) return 0;
+
+  const juriIds = Object.keys(penilaian);
+  let totalJuriScore = 0;
+  let juriCountForAspect = 0;
+
   juriIds.forEach(juriId => {
-    const scores = penilaianStr[juriId].scores;
-    let juriScore = 0;
-    aspekList.forEach(aspek => {
-      // Periksa apakah ini format lama (skor berdasarkan aspek.id skala 0-100)
-      // Jika ya, gunakan. Jika tidak, hitung dari indikator (skala 1-5)
-      if (scores[aspek.id] !== undefined && Object.keys(scores).includes(aspek.id)) {
-         juriScore += (scores[aspek.id] * (aspek.bobot / 100));
-      } else {
-         const numIndikator = aspek.indikator.length;
-         if (numIndikator > 0) {
-            let sumIndikator = 0;
-            aspek.indikator.forEach(ind => {
-               // skor tiap indikator adalah dari 1-5
-               sumIndikator += (scores[ind.id] || 0); 
-            });
-            const maxIndikatorScore = numIndikator * 5;
-            const aspectScore100 = (sumIndikator / maxIndikatorScore) * 100;
-            juriScore += (aspectScore100 * (aspek.bobot / 100));
-         }
-      }
-    });
-    totalAllJuri += juriScore;
+    const scores = penilaian[juriId].scores;
+    const numIndikator = aspek.indikator.length;
+    
+    // Check if the jury rated this aspect's indicators
+    let hasRating = false;
+    let sumIndikator = 0;
+    
+    if (numIndikator > 0) {
+      aspek.indikator.forEach(ind => {
+        if (scores[ind.id] !== undefined && scores[ind.id] > 0) {
+          sumIndikator += scores[ind.id];
+          hasRating = true;
+        }
+      });
+    }
+
+    if (hasRating) {
+      const maxScore = numIndikator * 5;
+      const score100 = (sumIndikator / maxScore) * 100;
+      totalJuriScore += score100;
+      juriCountForAspect++;
+    }
   });
-  
-  return totalAllJuri / juriIds.length;
+
+  return juriCountForAspect > 0 ? totalJuriScore / juriCountForAspect : 0;
 }
 
-export function calculateNilaiAkhir(peserta: Peserta, aspekMedia: Aspek[], aspekPresentasi: Aspek[]): number {
-  const nilaiMedia = calculateNilaiTahap(peserta.penilaianMedia, aspekMedia);
-  const nilaiPresentasi = calculateNilaiTahap(peserta.penilaianPresentasi, aspekPresentasi);
+/**
+ * Calculates the overall score for a category like Media or Presentasi
+ * by weighting the average score of each aspect inside the category list.
+ */
+export function calculateCategoryScore(
+  penilaian: Record<string, { scores: Record<string, number> }> | undefined,
+  aspekList: Aspek[]
+): number {
+  if (!penilaian || Object.keys(penilaian).length === 0 || aspekList.length === 0) return 0;
   
-  // Tahap 1: 60%, Tahap 2: 40%
+  let totalWeighted = 0;
+  let totalBobotGraded = 0;
+  
+  aspekList.forEach(aspek => {
+    const aspectScore = calculateAspectScore(penilaian, aspek);
+    if (aspectScore > 0) {
+      totalWeighted += aspectScore * (aspek.bobot / 100);
+      totalBobotGraded += aspek.bobot;
+    }
+  });
+  
+  // Normalize if not all aspects are graded yet, but if they are graded we return the weighted sum.
+  // To keep it standard, we can return the cumulative total weighted score directly,
+  // or return the weighted average based on graded aspects. Let's return the exact weighted sum.
+  return totalWeighted;
+}
+
+// Backwards compatibility mapper
+export function calculateNilaiTahap(
+  penilaian: Record<string, { scores: Record<string, number> }> | undefined,
+  aspekList: Aspek[]
+): number {
+  return calculateCategoryScore(penilaian, aspekList);
+}
+
+/**
+ * Calculates the final unified score combining both Phase 1 (Media, 60%) and Phase 2 (Presentasi, 40%).
+ */
+export function calculateNilaiAkhir(peserta: Peserta, aspekMedia: Aspek[], aspekPresentasi: Aspek[]): number {
+  const nilaiMedia = calculateCategoryScore(peserta.penilaianMedia, aspekMedia);
+  const nilaiPresentasi = calculateCategoryScore(peserta.penilaianPresentasi, aspekPresentasi);
+  
   if (nilaiMedia > 0 && nilaiPresentasi === 0) {
-     return nilaiMedia * 0.6; // If presentasi not yet done
+    return nilaiMedia * 0.6;
+  }
+  if (nilaiMedia === 0 && nilaiPresentasi > 0) {
+    return nilaiPresentasi * 0.4;
   }
   return (nilaiMedia * 0.6) + (nilaiPresentasi * 0.4);
 }
 
+/**
+ * Returns a simple single-stage progress status.
+ */
 export function getStatus(peserta: Peserta): string {
   const hasMedia = Object.keys(peserta.penilaianMedia || {}).length > 0;
-  const presentasiCount = Object.keys(peserta.penilaianPresentasi || {}).length;
+  const hasPresentasi = Object.keys(peserta.penilaianPresentasi || {}).length > 0;
   
-  if (hasMedia && presentasiCount >= 3) return "Selesai (Dinilai Penuh)";
-  if (hasMedia && presentasiCount > 0) return "Sebagian Presentasi";
-  if (hasMedia) return "Dinilai Media";
+  if (hasMedia && hasPresentasi) return "Selesai Dinilai";
+  if (hasMedia || hasPresentasi) return "Sebagian Dinilai";
   return "Belum Dinilai";
 }
