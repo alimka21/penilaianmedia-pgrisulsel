@@ -318,10 +318,24 @@ export const useDataStore = create<DataState>()((set) => ({
 
   updateAspekMedia: async (aspekMedia) => {
     try {
+      const snap = await getDocs(collection(db, 'aspekMedia'));
+      const existingIds = snap.docs.map(doc => doc.id);
+      const newIds = aspekMedia.map(asp => asp.id);
+      
       const batch = writeBatch(db);
+      
+      // Delete removed ones
+      existingIds.forEach(id => {
+        if (!newIds.includes(id)) {
+          batch.delete(doc(db, 'aspekMedia', id));
+        }
+      });
+      
+      // Set/update current ones
       aspekMedia.forEach(asp => {
         batch.set(doc(db, 'aspekMedia', asp.id), asp);
       });
+      
       await batch.commit();
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'aspekMedia/batch');
@@ -330,10 +344,24 @@ export const useDataStore = create<DataState>()((set) => ({
 
   updateAspekPresentasi: async (aspekPresentasi) => {
     try {
+      const snap = await getDocs(collection(db, 'aspekPresentasi'));
+      const existingIds = snap.docs.map(doc => doc.id);
+      const newIds = aspekPresentasi.map(asp => asp.id);
+      
       const batch = writeBatch(db);
+      
+      // Delete removed ones
+      existingIds.forEach(id => {
+        if (!newIds.includes(id)) {
+          batch.delete(doc(db, 'aspekPresentasi', id));
+        }
+      });
+      
+      // Set/update current ones
       aspekPresentasi.forEach(asp => {
         batch.set(doc(db, 'aspekPresentasi', asp.id), asp);
       });
+      
       await batch.commit();
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'aspekPresentasi/batch');
