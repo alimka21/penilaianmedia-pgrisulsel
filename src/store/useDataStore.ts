@@ -9,7 +9,8 @@ import {
   deleteDoc, 
   onSnapshot, 
   writeBatch,
-  getDocs
+  getDocs,
+  deleteField
 } from 'firebase/firestore';
 
 export type Kategori = 'GURU TK/RA/SEDERAJAT' | 'GURU SD/MI/SEDERAJAT' | 'GURU SMP/MTS/SEDERAJAT' | 'GURU SMA/SMK/MA/SEDERAJAT' | 'GURU SLB';
@@ -154,6 +155,12 @@ interface DataState {
   updatePenilaianPresentasi: (pesertaId: string, juriId: string, scores: Record<string, number>) => void;
   updateAspekMedia: (aspek: Aspek[]) => void;
   updateAspekPresentasi: (aspek: Aspek[]) => void;
+  resetPenilaianMediaJuri: (pesertaId: string, juriUsername: string) => Promise<void>;
+  resetPenilaianPresentasiJuri: (pesertaId: string, juriUsername: string) => Promise<void>;
+  resetSemuaPenilaianPeserta: (pesertaId: string) => Promise<void>;
+  bobotMedia: number;
+  bobotPresentasi: number;
+  updateBobotKategori: (bobotMedia: number, bobotPresentasi: number) => Promise<void>;
 }
 
 export const useDataStore = create<DataState>()((set) => ({
@@ -161,6 +168,8 @@ export const useDataStore = create<DataState>()((set) => ({
   juriList: [],
   aspekMedia: [],
   aspekPresentasi: [],
+  bobotMedia: 60,
+  bobotPresentasi: 40,
 
   addPeserta: async (pesertaInput) => {
     const id = Math.random().toString(36).substring(2, 11);
@@ -276,6 +285,37 @@ export const useDataStore = create<DataState>()((set) => ({
     }
   },
 
+  resetPenilaianMediaJuri: async (pesertaId, juriUsername) => {
+    try {
+      await updateDoc(doc(db, 'peserta', pesertaId), {
+        [`penilaianMedia.${juriUsername}`]: deleteField()
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${pesertaId}/resetMedia/${juriUsername}`);
+    }
+  },
+
+  resetPenilaianPresentasiJuri: async (pesertaId, juriUsername) => {
+    try {
+      await updateDoc(doc(db, 'peserta', pesertaId), {
+        [`penilaianPresentasi.${juriUsername}`]: deleteField()
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${pesertaId}/resetPresentasi/${juriUsername}`);
+    }
+  },
+
+  resetSemuaPenilaianPeserta: async (pesertaId) => {
+    try {
+      await updateDoc(doc(db, 'peserta', pesertaId), {
+        penilaianMedia: {},
+        penilaianPresentasi: {}
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `peserta/${pesertaId}/resetAll`);
+    }
+  },
+
   updateAspekMedia: async (aspekMedia) => {
     try {
       const batch = writeBatch(db);
@@ -297,6 +337,14 @@ export const useDataStore = create<DataState>()((set) => ({
       await batch.commit();
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'aspekPresentasi/batch');
+    }
+  },
+
+  updateBobotKategori: async (bobotMedia, bobotPresentasi) => {
+    try {
+      await setDoc(doc(db, 'settings', 'bobotConfig'), { bobotMedia, bobotPresentasi });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'settings/bobotConfig');
     }
   }
 }));
@@ -344,6 +392,20 @@ onSnapshot(collection(db, 'aspekPresentasi'), (snapshot) => {
   handleFirestoreError(error, OperationType.LIST, 'aspekPresentasi');
 });
 
+onSnapshot(doc(db, 'settings', 'bobotConfig'), (snapshot) => {
+  if (snapshot.exists()) {
+    const data = snapshot.data();
+    useDataStore.setState({ 
+      bobotMedia: typeof data.bobotMedia === 'number' ? data.bobotMedia : 60, 
+      bobotPresentasi: typeof data.bobotPresentasi === 'number' ? data.bobotPresentasi : 40 
+    });
+  } else {
+    useDataStore.setState({ bobotMedia: 60, bobotPresentasi: 40 });
+  }
+}, (error) => {
+  console.warn('Failed to listen settings/bobotConfig:', error);
+});
+
 // Seed function to initialize Firestore on very first load
 const seedInitialDataIfNeeded = async () => {
   try {
@@ -361,6 +423,12 @@ const seedInitialDataIfNeeded = async () => {
       for (const asp of defaultAspekPresentasi) {
         await setDoc(doc(db, 'aspekPresentasi', asp.id), asp);
       }
+    }
+
+    const configSnap = await getDocs(collection(db, 'settings'));
+    if (configSnap.empty) {
+      console.log('Seeding default bobotConfig...');
+      await setDoc(doc(db, 'settings', 'bobotConfig'), { bobotMedia: 60, bobotPresentasi: 40 });
     }
   } catch (error) {
     console.warn('Seeding was bypassed or failed:', error);

@@ -10,7 +10,7 @@ import {
 import { Download } from "lucide-react";
 
 export function AdminMonitoring() {
-  const { pesertaList, aspekMedia, aspekPresentasi, juriList } = useDataStore();
+  const { pesertaList, aspekMedia, aspekPresentasi, juriList, bobotMedia, bobotPresentasi } = useDataStore();
   const [activeKategori, setActiveKategori] = useState<Kategori | 'ALL'>('ALL');
 
   // Filter peserta by category
@@ -20,7 +20,7 @@ export function AdminMonitoring() {
 
   // Kalkulasi nilai akhir
   const getScore = (p: any) => {
-     return calculateNilaiAkhir(p, aspekMedia, aspekPresentasi);
+     return calculateNilaiAkhir(p, aspekMedia, aspekPresentasi, bobotMedia, bobotPresentasi);
   };
 
   // Peringkat (sorted by highest final score)
@@ -70,8 +70,8 @@ export function AdminMonitoring() {
     });
 
     // Tambah kolom Total & Status Terintegrasi
-    headers.push("Nilai Akhir Media (60%)");
-    headers.push("Nilai Akhir Presentasi (40%)");
+    headers.push(`Nilai Akhir Media (${bobotMedia}%)`);
+    headers.push(`Nilai Akhir Presentasi (${bobotPresentasi}%)`);
     headers.push("Nilai Akhir Gabungan");
     headers.push("Status Penilaian");
 
@@ -111,7 +111,7 @@ export function AdminMonitoring() {
       // Skor keseluruhan
       const nMedia = calculateCategoryScore(p.penilaianMedia, aspekMedia);
       const nPresentasi = calculateCategoryScore(p.penilaianPresentasi, aspekPresentasi);
-      const nAkhir = calculateNilaiAkhir(p, aspekMedia, aspekPresentasi);
+      const nAkhir = calculateNilaiAkhir(p, aspekMedia, aspekPresentasi, bobotMedia, bobotPresentasi);
       const status = getStatus(p);
 
       rowData.push(nMedia > 0 ? nMedia.toFixed(2) : '"-"');
@@ -227,8 +227,8 @@ export function AdminMonitoring() {
                 <th className="px-6 py-4">Nama Peserta</th>
                 <th className="px-6 py-4">Sekolah / Asal</th>
                 <th className="px-6 py-4">Kategori</th>
-                <th className="px-6 py-4 text-center">Nilai Media (60%)</th>
-                <th className="px-6 py-4 text-center">Nilai Presentasi (40%)</th>
+                <th className="px-6 py-4 text-center">Nilai Media ({bobotMedia}%)</th>
+                <th className="px-6 py-4 text-center">Nilai Presentasi ({bobotPresentasi}%)</th>
                 <th className="px-6 py-4 text-center">Nilai Akhir</th>
               </tr>
             </thead>

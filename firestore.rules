@@ -24,5 +24,10 @@ service cloud.firestore {
     match /aspekPresentasi/{aspekPresentasiId} {
       allow read, write: if true;
     }
+    
+    // settings collection
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
   }
 }

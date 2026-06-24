@@ -47,6 +47,16 @@
         "indikator": { "type": "array" }
       },
       "required": ["id", "nama", "bobot"]
+    },
+    "Settings": {
+      "title": "Pengaturan Lomba",
+      "description": "Pengaturan bobot kontribusi kelompok penilaian",
+      "type": "object",
+      "properties": {
+        "bobotMedia": { "type": "number" },
+        "bobotPresentasi": { "type": "number" }
+      },
+      "required": ["bobotMedia", "bobotPresentasi"]
     }
   },
   "firestore": {
@@ -65,6 +75,10 @@
     "/aspekPresentasi/{aspekPresentasiId}": {
       "schema": "Aspek",
       "description": "Koleksi aspek penilaian presentasi"
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "Koleksi dokumen konfigurasi sistem"
     }
   }
 }

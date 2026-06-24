@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 
 export function JuriDashboard() {
   const { user, logout } = useAuthStore();
-  const { pesertaList, updatePenilaianMedia, updatePenilaianPresentasi, aspekMedia, aspekPresentasi, juriList } = useDataStore();
+  const { pesertaList, updatePenilaianMedia, updatePenilaianPresentasi, aspekMedia, aspekPresentasi, juriList, bobotMedia, bobotPresentasi } = useDataStore();
   const navigate = useNavigate();
   
   const [selectedPeserta, setSelectedPeserta] = useState<Peserta | null>(null);
@@ -307,7 +307,7 @@ export function JuriDashboard() {
                         {/* SECTION: MEDIA CRITERIA */}
                         {juriMediaAspek.length > 0 && (
                           <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 block">Media Penilaian (Kontribusi 60%)</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 block">Media Penilaian (Kontribusi {bobotMedia}%)</h4>
                             <div className="space-y-4">
                               {juriMediaAspek.map(aspek => {
                                   const isExpanded = expandedAspekIds.includes(aspek.id);
@@ -369,7 +369,7 @@ export function JuriDashboard() {
 
                         {/* SECTION: PRESENTATION CRITERIA */}
                         <div>
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 block">Presentasi Penilaian (Kontribusi 40%)</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 block">Presentasi Penilaian (Kontribusi {bobotPresentasi}%)</h4>
                           <div className="space-y-4">
                             {juriPresentasiAspek.map(aspek => {
                                 const isExpanded = expandedAspekIds.includes(aspek.id);

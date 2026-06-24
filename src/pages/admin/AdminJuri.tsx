@@ -62,8 +62,11 @@ export function AdminJuri() {
 
   const handleAddOrEdit = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalRole = form.kategori === 'Semua' ? 'juri-presentasi' : 'juri-media';
+    const finalForm = { ...form, role: finalRole };
+
     if (editingId) {
-      updateJuri(editingId, form as Partial<JuriAccount>);
+      updateJuri(editingId, finalForm as Partial<JuriAccount>);
       Swal.fire({
         icon: 'success',
         title: 'Berhasil',
@@ -72,7 +75,7 @@ export function AdminJuri() {
         showConfirmButton: false
       });
     } else {
-      addJuri(form as Omit<JuriAccount, 'id'>);
+      addJuri(finalForm as Omit<JuriAccount, 'id'>);
       Swal.fire({
         icon: 'success',
         title: 'Berhasil',

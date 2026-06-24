@@ -112,19 +112,28 @@ export function calculateNilaiTahap(
 }
 
 /**
- * Calculates the final unified score combining both Phase 1 (Media, 60%) and Phase 2 (Presentasi, 40%).
+ * Calculates the final unified score combining both Phase 1 (Media) and Phase 2 (Presentasi) with dynamic weights.
  */
-export function calculateNilaiAkhir(peserta: Peserta, aspekMedia: Aspek[], aspekPresentasi: Aspek[]): number {
+export function calculateNilaiAkhir(
+  peserta: Peserta, 
+  aspekMedia: Aspek[], 
+  aspekPresentasi: Aspek[],
+  bobotMedia: number = 60,
+  bobotPresentasi: number = 40
+): number {
   const nilaiMedia = calculateCategoryScore(peserta.penilaianMedia, aspekMedia);
   const nilaiPresentasi = calculateCategoryScore(peserta.penilaianPresentasi, aspekPresentasi);
   
+  const factorMedia = bobotMedia / 100;
+  const factorPresentasi = bobotPresentasi / 100;
+  
   if (nilaiMedia > 0 && nilaiPresentasi === 0) {
-    return nilaiMedia * 0.6;
+    return nilaiMedia * factorMedia;
   }
   if (nilaiMedia === 0 && nilaiPresentasi > 0) {
-    return nilaiPresentasi * 0.4;
+    return nilaiPresentasi * factorPresentasi;
   }
-  return (nilaiMedia * 0.6) + (nilaiPresentasi * 0.4);
+  return (nilaiMedia * factorMedia) + (nilaiPresentasi * factorPresentasi);
 }
 
 /**

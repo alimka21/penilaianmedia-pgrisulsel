@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useDataStore, Peserta, Kategori } from "@/store/useDataStore";
 import { getStatus } from "@/lib/scoreUtils";
-import { Trash2, Plus, Download, Upload, FileText, Edit2 } from "lucide-react";
+import { Trash2, Plus, Download, Upload, FileText, Edit2, RotateCcw, AlertTriangle } from "lucide-react";
 import Swal from 'sweetalert2';
 import Papa from 'papaparse';
 import { YouTubeDurationFetcher } from "@/components/YouTubeDurationFetcher";
@@ -14,8 +14,23 @@ function formatDuration(seconds: number): string {
 
 export function AdminPeserta() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { pesertaList, addPeserta, deletePeserta, importPeserta, updatePeserta } = useDataStore();
+  const { 
+     pesertaList, 
+     juriList,
+     aspekMedia,
+     aspekPresentasi,
+     bobotMedia,
+     bobotPresentasi,
+     addPeserta, 
+     deletePeserta, 
+     importPeserta, 
+     updatePeserta,
+     resetPenilaianMediaJuri,
+     resetPenilaianPresentasiJuri,
+     resetSemuaPenilaianPeserta
+  } = useDataStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPesertaForManageScores, setSelectedPesertaForManageScores] = useState<Peserta | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<Kategori | 'Semua'>('Semua');
   const [form, setForm] = useState<Partial<Peserta>>({
@@ -139,6 +154,71 @@ export function AdminPeserta() {
       error: (error) => {
         Swal.fire('Error parsing CSV', error.message, 'error');
         if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    });
+  };
+
+  const handleResetJuriScore = (pesertaId: string, juriUsername: string, type: 'media' | 'presentasi', juriName: string) => {
+    Swal.fire({
+      title: 'Reset Nilai?',
+      text: `Apakah Anda yakin ingin menghapus penilaian ${type === 'media' ? 'Media Pembelajaran' : 'Presentasi'} yang diberikan oleh ${juriName}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Reset',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#ef4444',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (type === 'media') {
+          resetPenilaianMediaJuri(pesertaId, juriUsername).then(() => {
+            if (selectedPesertaForManageScores && selectedPesertaForManageScores.id === pesertaId) {
+               const updated = {
+                  ...selectedPesertaForManageScores,
+                  penilaianMedia: { ...selectedPesertaForManageScores.penilaianMedia }
+               };
+               delete updated.penilaianMedia?.[juriUsername];
+               setSelectedPesertaForManageScores(updated);
+            }
+            Swal.fire('Terhapus!', 'Penilaian media juri tersebut berhasil direset.', 'success');
+          });
+        } else {
+          resetPenilaianPresentasiJuri(pesertaId, juriUsername).then(() => {
+            if (selectedPesertaForManageScores && selectedPesertaForManageScores.id === pesertaId) {
+               const updated = {
+                  ...selectedPesertaForManageScores,
+                  penilaianPresentasi: { ...selectedPesertaForManageScores.penilaianPresentasi }
+               };
+               delete updated.penilaianPresentasi?.[juriUsername];
+               setSelectedPesertaForManageScores(updated);
+            }
+            Swal.fire('Terhapus!', 'Penilaian presentasi juri tersebut berhasil direset.', 'success');
+          });
+        }
+      }
+    });
+  };
+
+  const handleResetAllScores = (pesertaId: string, namaPeserta: string) => {
+    Swal.fire({
+      title: 'Reset Semua Nilai?',
+      text: `Apakah Anda yakin ingin mereset seluruh penilaian (Media & Presentasi) untuk peserta "${namaPeserta}"? Tindakan ini tidak dapat dibatalkan.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Reset Semua',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#ef4444',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetSemuaPenilaianPeserta(pesertaId).then(() => {
+          if (selectedPesertaForManageScores && selectedPesertaForManageScores.id === pesertaId) {
+             setSelectedPesertaForManageScores({
+                ...selectedPesertaForManageScores,
+                penilaianMedia: {},
+                penilaianPresentasi: {}
+             });
+          }
+          Swal.fire('Terhapus!', 'Seluruh penilaian peserta tersebut berhasil dikosongkan.', 'success');
+        });
       }
     });
   };
@@ -297,6 +377,9 @@ export function AdminPeserta() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
+                    <button onClick={() => setSelectedPesertaForManageScores(p)} className="text-amber-500 hover:text-amber-700 transition-colors p-1 flex items-center" title="Kelola / Reset Nilai">
+                      <RotateCcw size={16} />
+                    </button>
                     <button onClick={() => openEditModal(p)} className="text-blue-500 hover:text-blue-700 transition-colors p-1 flex items-center" title="Edit Data">
                       <Edit2 size={16} />
                     </button>
@@ -311,8 +394,8 @@ export function AdminPeserta() {
         </table>
       </div>
 
-      {/* Modal Add / Edit Manual */}
-      {isModalOpen && (
+       {/* Modal Add / Edit Manual */}
+       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
              <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white">
@@ -361,6 +444,153 @@ export function AdminPeserta() {
           </div>
         </div>
       )}
+
+       {/* Modal Kelola/Reset Nilai */}
+       {selectedPesertaForManageScores && (
+         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+              <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
+                 <div>
+                    <h3 className="text-lg font-bold text-slate-900">Kelola & Reset Nilai</h3>
+                    <p className="text-xs text-slate-500 mt-1">Peserta: <span className="font-semibold text-slate-700">{selectedPesertaForManageScores.namaPeserta}</span> ({selectedPesertaForManageScores.kategori})</p>
+                 </div>
+                 <button onClick={() => setSelectedPesertaForManageScores(null)} className="text-slate-400 hover:text-slate-700 text-2xl font-semibold">&times;</button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                 {/* Nilai Media */}
+                 <div>
+                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                       <span className="w-2 h-2 bg-blue-600 rounded-full" /> Nilai Media Pembelajaran ({bobotMedia}%)
+                    </h4>
+                    {Object.keys(selectedPesertaForManageScores.penilaianMedia || {}).length === 0 ? (
+                       <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-dashed border-slate-200">Belum ada penilaian Media Pembelajaran dari juri manapun.</p>
+                    ) : (
+                       <div className="space-y-2.5">
+                          {Object.entries(selectedPesertaForManageScores.penilaianMedia || {}).map(([juriUsername, detail]) => {
+                             const juri = juriList.find(j => j.username === juriUsername);
+                             const juriName = juri ? juri.name : juriUsername;
+                             
+                             // Calculate weighted score for this jury
+                             let totalWeighted = 0;
+                             aspekMedia.forEach(aspek => {
+                                const scores = (detail as any).scores || {};
+                                const numIndikator = aspek.indikator.length;
+                                let sumIndikator = 0;
+                                let hasRating = false;
+                                aspek.indikator.forEach(ind => {
+                                   if (scores[ind.id] !== undefined && scores[ind.id] > 0) {
+                                      sumIndikator += scores[ind.id];
+                                      hasRating = true;
+                                   }
+                                });
+                                if (hasRating && numIndikator > 0) {
+                                   const score100 = (sumIndikator / (numIndikator * 5)) * 100;
+                                   totalWeighted += score100 * (aspek.bobot / 100);
+                                }
+                             });
+
+                             return (
+                                <div key={juriUsername} className="flex items-center justify-between p-3 bg-blue-50/50 border border-blue-100 rounded-lg">
+                                   <div>
+                                      <div className="font-semibold text-slate-800 text-sm">{juriName}</div>
+                                      <div className="text-xs text-slate-500 font-mono">Username: {juriUsername}</div>
+                                   </div>
+                                   <div className="flex items-center gap-4">
+                                      <div className="text-right">
+                                         <div className="text-xs text-slate-500">Nilai</div>
+                                         <div className="font-bold text-slate-900 text-base">{totalWeighted.toFixed(2)}</div>
+                                      </div>
+                                      <button 
+                                        onClick={() => handleResetJuriScore(selectedPesertaForManageScores.id, juriUsername, 'media', juriName)}
+                                        className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold rounded transition flex items-center gap-1"
+                                      >
+                                         <RotateCcw size={12} /> Reset
+                                      </button>
+                                   </div>
+                                </div>
+                             );
+                          })}
+                       </div>
+                    )}
+                 </div>
+
+                 {/* Nilai Presentasi */}
+                 <div>
+                    <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                       <span className="w-2 h-2 bg-indigo-600 rounded-full" /> Nilai Presentasi ({bobotPresentasi}%)
+                    </h4>
+                    {Object.keys(selectedPesertaForManageScores.penilaianPresentasi || {}).length === 0 ? (
+                       <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-dashed border-slate-200">Belum ada penilaian Presentasi dari juri manapun.</p>
+                    ) : (
+                       <div className="space-y-2.5">
+                          {Object.entries(selectedPesertaForManageScores.penilaianPresentasi || {}).map(([juriUsername, detail]) => {
+                             const juri = juriList.find(j => j.username === juriUsername);
+                             const juriName = juri ? juri.name : juriUsername;
+                             
+                             // Calculate weighted score for this jury
+                             let totalWeighted = 0;
+                             aspekPresentasi.forEach(aspek => {
+                                const scores = (detail as any).scores || {};
+                                const numIndikator = aspek.indikator.length;
+                                let sumIndikator = 0;
+                                let hasRating = false;
+                                aspek.indikator.forEach(ind => {
+                                   if (scores[ind.id] !== undefined && scores[ind.id] > 0) {
+                                      sumIndikator += scores[ind.id];
+                                      hasRating = true;
+                                   }
+                                });
+                                if (hasRating && numIndikator > 0) {
+                                   const score100 = (sumIndikator / (numIndikator * 5)) * 100;
+                                   totalWeighted += score100 * (aspek.bobot / 100);
+                                }
+                             });
+
+                             return (
+                                <div key={juriUsername} className="flex items-center justify-between p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg">
+                                   <div>
+                                      <div className="font-semibold text-slate-800 text-sm">{juriName}</div>
+                                      <div className="text-xs text-slate-500 font-mono">Username: {juriUsername}</div>
+                                   </div>
+                                   <div className="flex items-center gap-4">
+                                      <div className="text-right">
+                                         <div className="text-xs text-slate-500">Nilai</div>
+                                         <div className="font-bold text-slate-900 text-base">{totalWeighted.toFixed(2)}</div>
+                                      </div>
+                                      <button 
+                                        onClick={() => handleResetJuriScore(selectedPesertaForManageScores.id, juriUsername, 'presentasi', juriName)}
+                                        className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold rounded transition flex items-center gap-1"
+                                      >
+                                         <RotateCcw size={12} /> Reset
+                                      </button>
+                                   </div>
+                                </div>
+                             );
+                          })}
+                       </div>
+                    )}
+                 </div>
+              </div>
+
+              <div className="p-6 border-t border-slate-100 flex flex-wrap gap-3 justify-between bg-slate-50 rounded-b-xl">
+                 <button 
+                   onClick={() => handleResetAllScores(selectedPesertaForManageScores.id, selectedPesertaForManageScores.namaPeserta)}
+                   disabled={Object.keys(selectedPesertaForManageScores.penilaianMedia || {}).length === 0 && Object.keys(selectedPesertaForManageScores.penilaianPresentasi || {}).length === 0}
+                   className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors"
+                 >
+                    <AlertTriangle size={14} /> Reset Semua Nilai Peserta Ini
+                 </button>
+                 <button 
+                   onClick={() => setSelectedPesertaForManageScores(null)}
+                   className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition-colors"
+                 >
+                    Tutup
+                 </button>
+              </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }

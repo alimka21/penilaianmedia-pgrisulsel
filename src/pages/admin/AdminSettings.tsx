@@ -4,13 +4,63 @@ import { Plus, Trash2, Save } from "lucide-react";
 import Swal from 'sweetalert2';
 
 export function AdminSettings() {
-  const { aspekMedia, aspekPresentasi, updateAspekMedia, updateAspekPresentasi } = useDataStore();
+  const { 
+    aspekMedia, 
+    aspekPresentasi, 
+    bobotMedia, 
+    bobotPresentasi, 
+    updateAspekMedia, 
+    updateAspekPresentasi,
+    updateBobotKategori 
+  } = useDataStore();
   
   // Local states to handle editing before saving
-  const [localMedia, setLocalMedia] = useState<Aspek[]>([...aspekMedia]);
-  const [localPresentasi, setLocalPresentasi] = useState<Aspek[]>([...aspekPresentasi]);
+  const [localMedia, setLocalMedia] = useState<Aspek[]>([]);
+  const [localPresentasi, setLocalPresentasi] = useState<Aspek[]>([]);
+  const [localBobotMedia, setLocalBobotMedia] = useState<number>(60);
+  const [localBobotPresentasi, setLocalBobotPresentasi] = useState<number>(40);
+
+  React.useEffect(() => {
+    if (aspekMedia.length > 0) {
+      setLocalMedia(aspekMedia);
+    }
+  }, [aspekMedia]);
+
+  React.useEffect(() => {
+    if (aspekPresentasi.length > 0) {
+      setLocalPresentasi(aspekPresentasi);
+    }
+  }, [aspekPresentasi]);
+
+  React.useEffect(() => {
+    if (bobotMedia !== undefined) {
+      setLocalBobotMedia(bobotMedia);
+    }
+  }, [bobotMedia]);
+
+  React.useEffect(() => {
+    if (bobotPresentasi !== undefined) {
+      setLocalBobotPresentasi(bobotPresentasi);
+    }
+  }, [bobotPresentasi]);
   
   const calculateTotal = (aspekList: Aspek[]) => aspekList.reduce((sum, a) => sum + a.bobot, 0);
+
+  const handleMediaWeightChange = (val: number) => {
+    if (isNaN(val)) val = 0;
+    if (val < 0) val = 0;
+    if (val > 100) val = 100;
+    setLocalBobotMedia(val);
+    setLocalBobotPresentasi(100 - val);
+  };
+
+  const handlePresentasiWeightChange = (val: number) => {
+    if (isNaN(val)) val = 0;
+    if (val < 0) val = 0;
+    if (val > 100) val = 100;
+    setLocalBobotPresentasi(val);
+    setLocalBobotMedia(100 - val);
+  };
 
   const handleSave = () => {
      if (calculateTotal(localMedia) !== 100 || calculateTotal(localPresentasi) !== 100) {
@@ -23,10 +73,11 @@ export function AdminSettings() {
      }
      updateAspekMedia(localMedia);
      updateAspekPresentasi(localPresentasi);
+     updateBobotKategori(localBobotMedia, localBobotPresentasi);
      Swal.fire({
        icon: 'success',
        title: 'Tersimpan',
-       text: 'Konfigurasi aspek penilaian 1 tahap berhasil disimpan!',
+       text: 'Konfigurasi aspek penilaian & bobot kelompok berhasil disimpan!',
        timer: 1500,
        showConfirmButton: false
      });
@@ -153,12 +204,90 @@ export function AdminSettings() {
       <div className="bg-slate-900 rounded-xl p-6 text-slate-300 shadow-lg border border-slate-800">
          <h2 className="text-lg font-bold text-white mb-1">Pengaturan Penilaian Terintegrasi (1 Tahap Lomba)</h2>
          <p className="text-xs opacity-80 leading-relaxed">
-            Sistem saat ini dikonfigurasi menggunakan skema satu tahap tunggal. Skor akhir dihitung secara otomatis menggunakan gabungan aspek <b>Media Pembelajaran (Kontribusi Lomba 60%)</b> dan aspek <b>Presentasi (Kontribusi Lomba 40%)</b>.
+            Sistem saat ini dikonfigurasi menggunakan skema satu tahap tunggal. Skor akhir dihitung secara otomatis menggunakan gabungan aspek <b>Media Pembelajaran (Kontribusi Lomba {localBobotMedia}%)</b> dan aspek <b>Presentasi (Kontribusi Lomba {localBobotPresentasi}%)</b>.
          </p>
       </div>
 
-      {renderEditor("Kriteria Kelompok 1: Media Pembelajaran (Kontribusi Lomba 60%)", localMedia, setLocalMedia)}
-      {renderEditor("Kriteria Kelompok 2: Presentasi (Kontribusi Lomba 40%)", localPresentasi, setLocalPresentasi)}
+      {/* SECTION: Bobot Kontribusi Kelompok */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 lg:p-8">
+         <div className="mb-6">
+            <h2 className="text-lg font-bold text-slate-900">Ubah Bobot Kelompok Penilaian</h2>
+            <p className="text-sm text-slate-500">Tentukan persentase kontribusi masing-masing kelompok penilaian terhadap Nilai Akhir. Kedua kelompok akan saling menyesuaikan secara otomatis agar totalnya tepat 100%.</p>
+         </div>
+         
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* Kelompok 1 Card */}
+            <div className="border border-slate-200 rounded-xl p-5 bg-blue-50/30 flex flex-col justify-between">
+               <div>
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-100/50 px-2.5 py-1 rounded-md">Kelompok 1</span>
+                  <h3 className="font-bold text-slate-800 text-base mt-2.5">Media Pembelajaran</h3>
+                  <p className="text-xs text-slate-500 mt-1">Bobot kontribusi penilaian media terhadap hasil akhir peserta.</p>
+               </div>
+               <div className="flex items-center gap-3 mt-6">
+                  <input 
+                     type="range"
+                     min="0"
+                     max="100"
+                     value={localBobotMedia}
+                     onChange={e => handleMediaWeightChange(Number(e.target.value))}
+                     className="flex-1 accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
+                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                     <input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={localBobotMedia}
+                        onChange={e => handleMediaWeightChange(Number(e.target.value))}
+                        className="w-16 p-2 border border-slate-300 rounded-lg text-center font-bold text-slate-800 bg-white"
+                     />
+                     <span className="font-semibold text-slate-500">%</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Kelompok 2 Card */}
+            <div className="border border-slate-200 rounded-xl p-5 bg-indigo-50/30 flex flex-col justify-between">
+               <div>
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider bg-indigo-100/50 px-2.5 py-1 rounded-md">Kelompok 2</span>
+                  <h3 className="font-bold text-slate-800 text-base mt-2.5">Presentasi & Tanya Jawab</h3>
+                  <p className="text-xs text-slate-500 mt-1">Bobot kontribusi penilaian presentasi terhadap hasil akhir peserta.</p>
+               </div>
+               <div className="flex items-center gap-3 mt-6">
+                  <input 
+                     type="range"
+                     min="0"
+                     max="100"
+                     value={localBobotPresentasi}
+                     onChange={e => handlePresentasiWeightChange(Number(e.target.value))}
+                     className="flex-1 accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
+                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                     <input 
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={localBobotPresentasi}
+                        onChange={e => handlePresentasiWeightChange(Number(e.target.value))}
+                        className="w-16 p-2 border border-slate-300 rounded-lg text-center font-bold text-slate-800 bg-white"
+                     />
+                     <span className="font-semibold text-slate-500">%</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         {/* Total Accumulation Indicator */}
+         <div className="flex justify-between items-center p-4 bg-slate-50 border border-slate-100 rounded-xl mt-6">
+            <span className="font-semibold text-slate-700">Total Akumulasi Kontribusi Kelompok</span>
+            <span className="font-extrabold text-xl text-emerald-600">
+               {localBobotMedia + localBobotPresentasi}% (Tepat / Seimbang)
+            </span>
+         </div>
+      </div>
+
+      {renderEditor(`Kriteria Kelompok 1: Media Pembelajaran (Kontribusi Lomba ${localBobotMedia}%)`, localMedia, setLocalMedia)}
+      {renderEditor(`Kriteria Kelompok 2: Presentasi (Kontribusi Lomba ${localBobotPresentasi}%)`, localPresentasi, setLocalPresentasi)}
 
       <div className="sticky bottom-6 flex justify-end">
           <button 
