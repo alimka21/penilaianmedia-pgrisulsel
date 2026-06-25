@@ -68,7 +68,7 @@ export function JuriDashboard() {
 
   // Allowed aspects to evaluate
   const juriMediaAspek = juriKategori !== 'Semua' ? aspekMedia : [];
-  const juriPresentasiAspek = juriKategori === 'Semua' ? aspekPresentasi : [];
+  const juriPresentasiAspek = aspekPresentasi; // Every jury has access to evaluate presentation
   const activeAspek = [...juriMediaAspek, ...juriPresentasiAspek];
 
   // Auto-expand all aspects for convenience on entry
@@ -150,8 +150,12 @@ export function JuriDashboard() {
         });
 
         // Submit to firestore via store
-        updatePenilaianMedia(selectedPeserta.id, user.username, mediaScores);
-        updatePenilaianPresentasi(selectedPeserta.id, user.username, presentasiScores);
+        if (juriMediaAspek.length > 0) {
+           updatePenilaianMedia(selectedPeserta.id, user.username, mediaScores);
+        }
+        if (juriPresentasiAspek.length > 0) {
+           updatePenilaianPresentasi(selectedPeserta.id, user.username, presentasiScores);
+        }
 
         setSelectedPeserta(null);
         Swal.fire({
@@ -456,8 +460,8 @@ export function JuriDashboard() {
                 <div className="bg-slate-100/80 px-4 py-2.5 rounded-lg border border-slate-200">
                   <span className="text-xs font-bold text-slate-500 block uppercase mb-1">Hak Akses Penilaian Anda:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                     {juriMediaAspek.length > 0 ? (
-                       juriMediaAspek.map(a => (
+                     {activeAspek.length > 0 ? (
+                       activeAspek.map(a => (
                          <span key={a.id} className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200">
                            {a.nama}
                          </span>
@@ -490,9 +494,9 @@ export function JuriDashboard() {
                     ) : filteredPeserta.map((p) => {
                        const linksLengkap = p.linkYoutube && p.linkRpp && p.linkMedia;
                        // Verify if current logged-in jury has scored both media (at least one) and presentasi parameters
-                       const hasMediaScore = p.penilaianMedia?.[user.username];
-                       const hasPresentasiScore = p.penilaianPresentasi?.[user.username];
-                       const sudahDinilaiSaya = !!hasMediaScore || !!hasPresentasiScore;
+                       const hasMediaScore = juriMediaAspek.length > 0 ? !!p.penilaianMedia?.[user.username] : true;
+                       const hasPresentasiScore = juriPresentasiAspek.length > 0 ? !!p.penilaianPresentasi?.[user.username] : true;
+                       const sudahDinilaiSaya = hasMediaScore && hasPresentasiScore;
                        
                        return (
                          <tr key={p.id} className={`hover:bg-slate-50/80 transition-colors ${sudahDinilaiSaya ? 'bg-slate-50/30' : ''}`}>
