@@ -77,8 +77,27 @@ export function calculateAspectScoreForJuri(
 }
 
 /**
+ * Calculates the overall category score (0-100) for a specific jury.
+ */
+export function calculateCategoryScoreForJuri(
+  penilaian: Record<string, { scores: Record<string, number> }> | undefined,
+  aspekList: Aspek[],
+  juriUsername: string
+): number {
+  if (!penilaian || !penilaian[juriUsername] || aspekList.length === 0) return 0;
+  
+  let totalWeighted = 0;
+  aspekList.forEach(aspek => {
+    const aspectScore = calculateAspectScoreForJuri(penilaian, aspek, juriUsername);
+    totalWeighted += aspectScore * (aspek.bobot / 100);
+  });
+  
+  return totalWeighted;
+}
+
+/**
  * Calculates the overall score for a category like Media or Presentasi
- * by weighting the average score of each aspect inside the category list.
+ * by averaging the total scores submitted by each active jury (adaptive division).
  */
 export function calculateCategoryScore(
   penilaian: Record<string, { scores: Record<string, number> }> | undefined,
@@ -86,21 +105,19 @@ export function calculateCategoryScore(
 ): number {
   if (!penilaian || Object.keys(penilaian).length === 0 || aspekList.length === 0) return 0;
   
-  let totalWeighted = 0;
-  let totalBobotGraded = 0;
+  const juriIds = Object.keys(penilaian);
+  let totalJuriesScore = 0;
+  let activeJuriCount = 0;
   
-  aspekList.forEach(aspek => {
-    const aspectScore = calculateAspectScore(penilaian, aspek);
-    if (aspectScore > 0) {
-      totalWeighted += aspectScore * (aspek.bobot / 100);
-      totalBobotGraded += aspek.bobot;
+  juriIds.forEach(juriId => {
+    const juriScore = calculateCategoryScoreForJuri(penilaian, aspekList, juriId);
+    if (juriScore > 0) {
+      totalJuriesScore += juriScore;
+      activeJuriCount++;
     }
   });
   
-  // Normalize if not all aspects are graded yet, but if they are graded we return the weighted sum.
-  // To keep it standard, we can return the cumulative total weighted score directly,
-  // or return the weighted average based on graded aspects. Let's return the exact weighted sum.
-  return totalWeighted;
+  return activeJuriCount > 0 ? totalJuriesScore / activeJuriCount : 0;
 }
 
 // Backwards compatibility mapper

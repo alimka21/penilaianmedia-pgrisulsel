@@ -141,7 +141,7 @@ export function AdminJuri() {
               <th className="px-6 py-4">Nama / Username</th>
               <th className="px-6 py-4">Password</th>
               <th className="px-6 py-4">Kategori Tugas</th>
-              <th className="px-6 py-4">Hak Akses Aspek Media</th>
+              <th className="px-6 py-4">Hak Akses Penilaian</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 text-center">Aksi</th>
             </tr>
@@ -169,24 +169,13 @@ export function AdminJuri() {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  {j.aspekMediaIds && j.aspekMediaIds.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {j.aspekMediaIds.map(id => {
-                        const aspect = aspekMedia.find(a => a.id === id);
-                        return aspect ? (
-                          <span key={id} className="text-[10px] bg-sky-100 text-sky-800 font-medium px-2 py-0.5 rounded border border-sky-200">
-                            {aspect.nama}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  ) : j.kategori !== "Semua" ? (
-                    <span className="text-xs text-slate-400 italic block mt-1">
-                      Belum dikonfigurasi / None
+                  {j.kategori !== "Semua" ? (
+                    <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-2.5 py-1 rounded border border-blue-100">
+                      Semua Aspek Media ({aspekMedia.length} Aspek)
                     </span>
                   ) : (
-                    <span className="text-xs text-indigo-500 font-medium bg-indigo-50 px-2 py-0.5 rounded">
-                      Akses Presentasi Penuh
+                    <span className="text-xs text-purple-600 font-semibold bg-purple-50 px-2.5 py-1 rounded border border-purple-100">
+                      Semua Aspek Presentasi
                     </span>
                   )}
                 </td>
@@ -256,58 +245,28 @@ export function AdminJuri() {
                    </select>
                 </div>
 
-                {/* Aspect Configuration checkboxes */}
-                <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Aspek Media yang Dinilai ({selectedKategori})
-                  </label>
-                  <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">
-                    Setiap aspek Media hanya bisa diampu oleh satu juri per kategori. Aspek Presentasi diakses oleh semua juri secara otomatis.
-                  </p>
-                  
-                  {selectedKategori === "Semua" ? (
-                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
-                      Pilih kategori jenjang khusus untuk melakukan set aspek penilaian Media.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {aspekMedia.map(aspek => {
-                        const isChecked = (form.aspekMediaIds || []).includes(aspek.id);
-                        const otherJuriWithAspect = otherJuriesInKategori.find(j => j.aspekMediaIds?.includes(aspek.id));
-                        const isTaken = !!otherJuriWithAspect;
-
-                        return (
-                          <div key={aspek.id} className="flex items-start gap-2.5 p-1.5 rounded hover:bg-white transition-colors">
-                            <input
-                              type="checkbox"
-                              id={`aspek-${aspek.id}`}
-                              disabled={isTaken}
-                              checked={isChecked}
-                              onChange={() => handleToggleAspect(aspek.id)}
-                              className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <div className="text-xs flex-1">
-                              <label 
-                                htmlFor={`aspek-${aspek.id}`} 
-                                className={`font-semibold ${isTaken ? 'text-slate-400 line-through' : 'text-slate-700 cursor-pointer'}`}
-                              >
-                                {aspek.nama}
-                              </label>
-                              <span className="text-[10px] text-slate-500 ml-1.5 font-bold bg-slate-100 px-1 py-0.5 rounded">
-                                {aspek.bobot}%
-                              </span>
-                              {isTaken && (
-                                <p className="text-[10px] text-red-500 font-semibold mt-0.5">
-                                  (Diampu oleh: {otherJuriWithAspect.name})
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                 {/* Informative Privileges Display */}
+                 <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
+                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                     Akses Hak Penilaian ({selectedKategori})
+                   </label>
+                   
+                   {selectedKategori === "Semua" ? (
+                     <div className="text-xs text-purple-700 bg-purple-50 p-3 rounded-lg border border-purple-100 space-y-1">
+                       <p className="font-bold">Akses: Juri Presentasi</p>
+                       <p className="leading-relaxed text-slate-600 font-normal">
+                         Juri ini secara otomatis berwenang menilai seluruh aspek kelompok <b>Presentasi</b> untuk seluruh jenjang peserta yang terdaftar.
+                       </p>
+                     </div>
+                   ) : (
+                     <div className="text-xs text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100 space-y-1">
+                       <p className="font-bold">Akses: Juri Media Pembelajaran</p>
+                       <p className="leading-relaxed text-slate-600 font-normal">
+                         Juri ini secara otomatis berwenang menilai <b>seluruh aspek Media Pembelajaran</b> ({aspekMedia.length} aspek) khusus untuk kategori/jenjang peserta: <b className="text-slate-800">{selectedKategori}</b>.
+                       </p>
+                     </div>
+                   )}
+                 </div>
 
                 <div>
                    <label className="block text-sm font-medium mb-1">Status</label>

@@ -63,41 +63,41 @@ const defaultAspekMedia: Aspek[] = [
   {
     id: "m1", nama: "Keinovatifan", bobot: 30,
     indikator: [
-      { id: "m1a", deskripsi: "Integrasi Kecerdasan Buatan (AI) secara relevan." },
-      { id: "m1b", deskripsi: "Orisinalitas konsep dan kebaruan ide." },
-      { id: "m1c", deskripsi: "Pendekatan pemecahan masalah yang unik." }
+      { id: "m1a", deskripsi: "Relevansi kebaruan metode dengan tujuan pembelajaran." },
+      { id: "m1b", deskripsi: "Mendorong proses pembelajaran yang bermakna dan mendalam bagi siswa." },
+      { id: "m1c", deskripsi: "Inovasi pendekatan dalam menyiasati tantangan/kesulitan belajar siswa." }
     ]
   },
   {
     id: "m2", nama: "Kreativitas", bobot: 20,
     indikator: [
-      { id: "m2a", deskripsi: "Desain visual dan antarmuka yang menarik." },
-      { id: "m2b", deskripsi: "Interaktivitas yang memancing partisipasi aktif." },
-      { id: "m2c", deskripsi: "Fleksibilitas penggunaan untuk berbagai gaya belajar." }
+      { id: "m2a", deskripsi: "Penyajian konten pembelajaran yang memicu rasa ingin tahu dan berpikir kritis." },
+      { id: "m2b", deskripsi: "Desain interaktivitas yang mendorong keterlibatan aktif dan kolaborasi siswa." },
+      { id: "m2c", deskripsi: "Fleksibilitas media dalam mengakomodasi berbagai gaya belajar siswa secara kreatif." }
     ]
   },
   {
     id: "m3", nama: "Kebermanfaatan", bobot: 20,
     indikator: [
-      { id: "m3a", deskripsi: "Kesesuaian materi dengan tujuan pembelajaran." },
-      { id: "m3b", deskripsi: "Dampak positif terhadap pemahaman siswa." },
-      { id: "m3c", deskripsi: "Meningkatkan motivasi peserta didik." }
+      { id: "m3a", deskripsi: "Dampak langsung terhadap peningkatan pemahaman dan hasil belajar siswa." },
+      { id: "m3b", deskripsi: "Kemampuan meningkatkan motivasi dan minat belajar siswa secara berkelanjutan." },
+      { id: "m3c", deskripsi: "Kemudahan mentransfer pemahaman konsep ke dalam konteks kehidupan nyata." }
     ]
   },
   {
     id: "m4", nama: "Aplikatif", bobot: 15,
     indikator: [
-      { id: "m4a", deskripsi: "Kemudahan akses dan penggunaan." },
-      { id: "m4b", deskripsi: "Kompatibilitas dengan berbagai perangkat (responsif)." },
-      { id: "m4c", deskripsi: "Bebas dari bug/error kritis dan mudah dipandu." }
+      { id: "m4a", deskripsi: "Kemudahan navigasi, kejelasan petunjuk, dan kenyamanan visual (UI/UX)." },
+      { id: "m4b", deskripsi: "Pemanfaatan teknologi terkini secara taktis (misal: fitur berbasis AI atau elemen interaktif modern)." },
+      { id: "m4c", deskripsi: "Kemudahan adaptasi dan kompatibilitas sistem pada berbagai jenis perangkat digital." }
     ]
   },
   {
     id: "m5", nama: "Efisien", bobot: 15,
     indikator: [
-      { id: "m5a", deskripsi: "Optimalisasi penggunaan sumber daya/kuota." },
-      { id: "m5b", deskripsi: "Kinerja aplikasi yang lancar tanpa lag." },
-      { id: "m5c", deskripsi: "Instruksi yang jelas dalam penggunaan awal." }
+      { id: "m5a", deskripsi: "Optimalisasi ukuran file dan kebutuhan kuota internet dalam pengoperasian media." },
+      { id: "m5b", deskripsi: "Responsivitas dan kelancaran performa teknis (bebas dari bug/crash)." },
+      { id: "m5c", deskripsi: "Alur kerja (workflow) penggunaan media yang praktis dan hemat waktu bagi guru dan siswa." }
     ]
   }
 ];
@@ -438,8 +438,16 @@ onSnapshot(doc(db, 'settings', 'bobotConfig'), (snapshot) => {
 const seedInitialDataIfNeeded = async () => {
   try {
     const aspekMediaSnap = await getDocs(collection(db, 'aspekMedia'));
-    if (aspekMediaSnap.empty) {
-      console.log('Seeding default aspekMedia...');
+    let needsAspekMediaSeed = aspekMediaSnap.empty;
+    if (!needsAspekMediaSeed) {
+      const docData = aspekMediaSnap.docs.find(d => d.id === 'm1')?.data() as Aspek | undefined;
+      if (docData && docData.indikator.some(ind => ind.id === 'm1a' && ind.deskripsi.includes('Kecerdasan Buatan'))) {
+        needsAspekMediaSeed = true;
+      }
+    }
+
+    if (needsAspekMediaSeed) {
+      console.log('Seeding/updating default aspekMedia to the new learning-impact criteria...');
       for (const asp of defaultAspekMedia) {
         await setDoc(doc(db, 'aspekMedia', asp.id), asp);
       }

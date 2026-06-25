@@ -65,11 +65,10 @@ export function JuriDashboard() {
   // Resolve current jury account & assigned aspect parameters
   const currentJuri = juriList.find(j => j.username === user.username);
   const juriKategori = currentJuri ? currentJuri.kategori : (user.kategori || 'Semua');
-  const allowedMediaIds = currentJuri?.aspekMediaIds || [];
 
   // Allowed aspects to evaluate
-  const juriMediaAspek = aspekMedia.filter(a => allowedMediaIds.includes(a.id));
-  const juriPresentasiAspek = aspekPresentasi; // presentasi is fully open
+  const juriMediaAspek = juriKategori !== 'Semua' ? aspekMedia : [];
+  const juriPresentasiAspek = juriKategori === 'Semua' ? aspekPresentasi : [];
   const activeAspek = [...juriMediaAspek, ...juriPresentasiAspek];
 
   // Auto-expand all aspects for convenience on entry
@@ -193,11 +192,14 @@ export function JuriDashboard() {
         }
      });
 
-     // Combine Media (60%) & Presentasi (40%)
-     if (juriMediaAspek.length === 0) {
-        return presentasiWeightedSum; // Handle if they only have Presentasi role setup
+     // Combine based on the jury type
+     if (juriMediaAspek.length > 0 && juriPresentasiAspek.length === 0) {
+        return mediaWeightedSum;
      }
-     return (mediaWeightedSum * 0.6) + (presentasiWeightedSum * 0.4);
+     if (juriPresentasiAspek.length > 0 && juriMediaAspek.length === 0) {
+        return presentasiWeightedSum;
+     }
+     return (mediaWeightedSum * (bobotMedia / 100)) + (presentasiWeightedSum * (bobotPresentasi / 100));
   };
 
   return (
@@ -452,10 +454,10 @@ export function JuriDashboard() {
                   </p>
                 </div>
                 <div className="bg-slate-100/80 px-4 py-2.5 rounded-lg border border-slate-200">
-                  <span className="text-xs font-bold text-slate-500 block uppercase mb-1">Tugas Nilai Media Anda:</span>
+                  <span className="text-xs font-bold text-slate-500 block uppercase mb-1">Hak Akses Penilaian Anda:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                     {allowedMediaIds.length > 0 ? (
-                       aspekMedia.filter(a => allowedMediaIds.includes(a.id)).map(a => (
+                     {juriMediaAspek.length > 0 ? (
+                       juriMediaAspek.map(a => (
                          <span key={a.id} className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200">
                            {a.nama}
                          </span>

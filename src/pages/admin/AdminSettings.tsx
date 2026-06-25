@@ -63,7 +63,7 @@ export function AdminSettings() {
     setLocalBobotMedia(100 - val);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       calculateTotal(localMedia) !== 100 ||
       calculateTotal(localPresentasi) !== 100
@@ -75,16 +75,38 @@ export function AdminSettings() {
       });
       return;
     }
-    updateAspekMedia(localMedia);
-    updateAspekPresentasi(localPresentasi);
-    updateBobotKategori(localBobotMedia, localBobotPresentasi);
+
     Swal.fire({
-      icon: "success",
-      title: "Tersimpan",
-      text: "Konfigurasi aspek penilaian & bobot kelompok berhasil disimpan!",
-      timer: 1500,
-      showConfirmButton: false,
+      title: "Menyimpan...",
+      text: "Sedang mengunggah konfigurasi penilaian ke server...",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
     });
+
+    try {
+      await Promise.all([
+        updateAspekMedia(localMedia),
+        updateAspekPresentasi(localPresentasi),
+        updateBobotKategori(localBobotMedia, localBobotPresentasi),
+      ]);
+
+      Swal.fire({
+        icon: "success",
+        title: "Tersimpan",
+        text: "Konfigurasi aspek penilaian & bobot kelompok berhasil disimpan!",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error: any) {
+      console.error("Gagal menyimpan konfigurasi:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: error?.message || "Terjadi kesalahan koneksi atau hak akses saat menyimpan ke Firestore.",
+      });
+    }
   };
 
   const renderEditor = (
